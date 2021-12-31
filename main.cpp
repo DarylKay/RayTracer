@@ -2,6 +2,8 @@
 #include <fstream>
 #include "vec3.h"
 #include "color.h"
+#include "ray.h"
+
 using namespace std;
 
 int main() {
