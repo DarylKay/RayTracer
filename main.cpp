@@ -16,7 +16,7 @@ bool hitSphere(const point3 &center, double radius, const ray &r) {
 }
 
 color rayColor(const ray &r) {
-    if (hitSphere(point3(0,0,-1), 0.50, r)) {
+    if (hitSphere(point3(0,0,-1), 0.25, r)) {
         return color(1,0,0);
     }
     vec3 unitDirection = unitVector(r.direction());
