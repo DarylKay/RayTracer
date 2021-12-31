@@ -1,5 +1,5 @@
-#ifndef RAYTRACER_RAY_H
-#define RAYTRACER_RAY_H
+#ifndef RAY_H
+#define RAY_H
 
 #include "vec3.h"
 
@@ -19,4 +19,4 @@ class ray {
         }
 };
 
-#endif //RAYTRACER_RAY_H
+#endif
