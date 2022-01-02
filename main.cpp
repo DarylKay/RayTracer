@@ -6,20 +6,6 @@
 
 using namespace std;
 
-double hitSphere(const point3 &center, double radius, const ray &r) {
-    vec3 oc = r.origin() - center;
-    double a = dot(r.direction(), r.direction());
-    double halfB = dot(oc, r.direction());
-    double c = dot(oc, oc) - radius * radius;
-    double discriminant = halfB * halfB - a * c;
-    if (discriminant < 0) {
-        return -1.0;
-    } else {
-        //smallest t - closest point to the camera
-        return (-halfB - sqrt(discriminant)) / a;
-    }
-}
-
 color rayColor(const ray &r) {
     double t = hitSphere(point3(0,0,-1), 0.50, r);
     if (t > 0.0) {
