@@ -1,20 +1,21 @@
 #include <iostream>
 #include <fstream>
-#include "vec3.h"
+
+#include "ray_tracer.h"
+
 #include "color.h"
-#include "ray.h"
+#include "hittable_list.h"
+#include "sphere.h"
 
 using namespace std;
 
-color rayColor(const ray &r) {
-    double t = hitSphere(point3(0,0,-1), 0.50, r);
-    if (t > 0.0) {
-        //normal vector
-        vec3 N = unitVector(r.at(t) - vec3(0,0,-1));
-        return 0.5*color(N.x() + 1,N.y() + 1,N.z() + 1);
+color rayColor(const ray& r, hittable& world) {
+    hit_record rec;
+    if(world.hit(r, 0, infinity, rec)){
+        return 0.5*(rec.normal+color(1,1,1));
     }
     vec3 unitDirection = unitVector(r.direction());
-    t = 0.5*(unitDirection.y() + 1.0);
+    double t = 0.5*(unitDirection.y() + 1.0);
     return (1.0-t)*color(1.0, 1.0, 1.0) + t*color(0.5, 0.7, 1.0);
 }
 
@@ -30,6 +31,11 @@ int main() {
     image << "P3" << endl;
     image << imageWidth << ' ' << imageHeight << endl;
     image << "255" << endl;
+
+    //world
+    hittable_list world;
+    world.add(make_shared<sphere>(point3(0,0,-1), 0.5));
+    world.add(make_shared<sphere>(point3(0,-100.5,-1),100));
 
     //camera
     double viewportHeight = 2.0;
@@ -48,7 +54,7 @@ int main() {
             double v = double(j) / (imageHeight - 1);
 
             ray r(origin, lowerLeftCorner + u*horizontal + v*vertical - origin);
-            color pixel = rayColor(r);
+            color pixel = rayColor(r, world);
 
             writeColor(image, pixel);
         }
