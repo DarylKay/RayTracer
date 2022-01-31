@@ -9,7 +9,7 @@ struct hit_record {
     double t;
     bool front_face;
 
-    inline void setFrontFace(const ray& ray,const vec3& outwardNormal) {
+    inline void setFrontFace(const ray& ray, const vec3& outwardNormal) {
         front_face = dot(ray.direction(), outwardNormal) < 0;
         if (front_face) {
             normal = outwardNormal;

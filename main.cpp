@@ -46,8 +46,8 @@ int main() {
             color pixel(0,0,0);
             ray r;
             for (int k = 0; k < numSamples; k++) {
-                double u = double((i + randomDouble()) / (imageWidth - 1));
-                double v = double((j + randomDouble()) / (imageHeight - 1));
+                double u = (i + randomDouble()) / (imageWidth - 1.0);
+                double v = (j + randomDouble()) / (imageHeight - 1.0);
                 r = cam.getRay(u,v);
                 pixel += rayColor(r, world);
             }
