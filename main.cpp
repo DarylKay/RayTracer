@@ -6,13 +6,14 @@
 #include "color.h"
 #include "hittable_list.h"
 #include "sphere.h"
+#include "camera.h"
 
 using namespace std;
 
-color rayColor(const ray& r, hittable& world) {
+color rayColor(const ray& r, const hittable& world) {
     hit_record rec;
     if(world.hit(r, 0, infinity, rec)){
-        return 0.5*(rec.normal+color(1,1,1));
+        return 0.5*(rec.normal + color(1,1,1));
     }
     vec3 unitDirection = unitVector(r.direction());
     double t = 0.5*(unitDirection.y() + 1.0);
@@ -20,10 +21,12 @@ color rayColor(const ray& r, hittable& world) {
 }
 
 int main() {
-    //image
+    camera cam;
+
     const double aspectRatio = 16.0/9.0;
     const int imageWidth = 400;
     const int imageHeight = (int)(imageWidth / aspectRatio);
+    int numSamples = 100;
 
     ofstream image;
     image.open("image.ppm", ios::out);
@@ -35,28 +38,20 @@ int main() {
     //world
     hittable_list world;
     world.add(make_shared<sphere>(point3(0,0,-1), 0.5));
-    world.add(make_shared<sphere>(point3(0,-100.5,-1),100));
-
-    //camera
-    double viewportHeight = 2.0;
-    double viewportWidth = viewportHeight * aspectRatio;
-    double focalLength = 1.0;
-
-    point3 origin = point3(0,0,0);
-    vec3 horizontal = vec3(viewportWidth, 0, 0);
-    vec3 vertical = vec3(0, viewportHeight, 0);
-    point3 lowerLeftCorner = origin - horizontal/2 - vertical/2 - vec3(0,0,focalLength);
+    world.add(make_shared<sphere>(point3(0,-1000.5,-1),1000));
 
     for (int j = imageHeight - 1; j >= 0; j--) {
         cerr << "\rScanlines remaining: " << j << ' ' << flush;
         for (int i = 0; i < imageWidth; i++) {
-            double u = double(i) / (imageWidth - 1);
-            double v = double(j) / (imageHeight - 1);
-
-            ray r(origin, lowerLeftCorner + u*horizontal + v*vertical - origin);
-            color pixel = rayColor(r, world);
-
-            writeColor(image, pixel);
+            color pixel(0,0,0);
+            ray r;
+            for (int k = 0; k < numSamples; k++) {
+                double u = double((i + randomDouble()) / (imageWidth - 1));
+                double v = double((j + randomDouble()) / (imageHeight - 1));
+                r = cam.getRay(u,v);
+                pixel += rayColor(r, world);
+            }
+            writeColor(image, pixel, numSamples);
         }
     }
 

@@ -3,7 +3,7 @@
 
 #include "hittable.h"
 
-class sphere : hittable {
+class sphere : public hittable {
     public:
         sphere();
         sphere(point3 cen, double rad) : center(cen), radius(rad) {};

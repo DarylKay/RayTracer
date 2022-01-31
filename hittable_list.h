@@ -7,7 +7,7 @@
 
 using namespace std;
 
-class hittable_list : hittable{
+class hittable_list : public hittable{
 public:
     hittable_list() = default;
     hittable_list(shared_ptr<hittable> object) { add(object); }
@@ -16,7 +16,6 @@ public:
     void add(shared_ptr<hittable> object) {objects.push_back(object); }
 
     bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
-
 
     vector<shared_ptr<hittable>> objects;
 };
