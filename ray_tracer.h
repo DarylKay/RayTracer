@@ -20,7 +20,7 @@ inline double randomDouble() {
 }
 
 inline double randomDouble(double min, double max) {
-    return min + (min - max) * randomDouble();
+    return randomDouble() * (max - min) + min;
 }
 
 inline double clamp(double x, double min, double max) {

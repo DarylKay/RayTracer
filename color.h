@@ -13,9 +13,10 @@ void writeColor(ostream &os, color pixelColor, int samples) {
 
     double convert = 1.0 / (double)samples;
 
-    r *= convert;
-    g *= convert;
-    b *= convert;
+    //color raised to 1/gamma, gamma=2.0
+    r = sqrt(r * convert);
+    g = sqrt(g * convert);
+    b = sqrt(b * convert);
 
     os << (int)(255.999 * clamp(r,0.0,1.0)) << ' '
        << (int)(255.999 * clamp(g,0.0,1.0)) << ' '
