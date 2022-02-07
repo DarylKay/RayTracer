@@ -104,6 +104,10 @@ inline vec3 randomUnitSphere() {
     return center;
 }
 
+inline vec3 lampertian(vec3 normal) {
+    return normal + unitVector(randomUnitSphere());
+}
+
 using point3 = vec3; //3D point
 using color = vec3; //RGB Color
 

@@ -17,8 +17,8 @@ color rayColor(const ray& r, const hittable& world, const int reflectLeft) {
     }
 
     if(world.hit(r, 0.000001, infinity, rec)){
-        vec3 bounce = rec.p + rec.normal + randomUnitSphere();
-        return 0.5 * (rayColor(ray(rec.p, bounce - rec.p), world, reflectLeft - 1));
+        vec3 target = rec.p + lampertian(rec.normal);
+        return 0.5 * (rayColor(ray(rec.p, target - rec.p), world, reflectLeft - 1));
     }
     vec3 unitDirection = unitVector(r.direction());
     double t = 0.5*(unitDirection.y() + 1.0);
@@ -28,8 +28,8 @@ color rayColor(const ray& r, const hittable& world, const int reflectLeft) {
 int main() {
     camera cam;
 
-    const int imageOption = 2; //higher = higher res
-    int numSamples = 1000;
+    const int imageOption = 0; //higher = higher res
+    int numSamples = 50;
 
     int imageWidth;
     if (imageOption == 3) {
