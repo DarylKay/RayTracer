@@ -47,6 +47,12 @@ class vec3 {
         double lengthSquared() const {
             return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
         }
+
+        bool near_zero() const {
+            // Return true if the vector is close to zero in all dimensions.
+            const double s = 1e-8;
+            return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
+        }
 };
 
 inline ostream& operator<<(ostream &os, vec3 &v) {
@@ -104,8 +110,12 @@ inline vec3 randomUnitSphere() {
     return center;
 }
 
-inline vec3 lampertian(vec3 normal) {
+inline vec3 lambertianScatter(vec3 normal) {
     return normal + unitVector(randomUnitSphere());
+}
+
+inline vec3 reflect(vec3 in, vec3 norm) {
+    return in - 2 * dot(in, norm) * norm;
 }
 
 using point3 = vec3; //3D point

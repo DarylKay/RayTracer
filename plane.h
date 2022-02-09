@@ -1,22 +1,23 @@
-#ifndef SPHERE_H
-#define SPHERE_H
+#ifndef PLANE_H
+#define PLANE_H
 
 #include "hittable.h"
 #include "vec3.h"
 #include "material.h"
 
-class sphere : public hittable {
-    public:
-        sphere();
-        sphere(point3 cen, double rad, shared_ptr<material> mat) : center(cen), radius(rad), material(mat){};
-        bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
 
-        point3 center;
-        double radius;
-        shared_ptr<material> material;
+class plane : public hittable {
+public:
+    plane();
+    plane(int z, shared_ptr<material> mat) : material(mat){
+
+    };
+    bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
+
+    shared_ptr<material> material;
 };
 
-bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {
+bool plane::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {
     vec3 oc = r.origin() - center;
     double a = dot(r.direction(), r.direction());
     double halfB = dot(oc, r.direction());
@@ -46,4 +47,5 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
     return true;
 }
 
-#endif
+
+#endif //PLANE_H

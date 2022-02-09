@@ -1,13 +1,16 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
-#include "ray.h"
+#include "ray_tracer.h"
+
+class material;
 
 struct hit_record {
     point3 p;
     vec3 normal;
     double t;
     bool front_face;
+    shared_ptr<material> material;
 
     inline void setFrontFace(const ray& ray, const vec3& outwardNormal) {
         front_face = dot(ray.direction(), outwardNormal) < 0;
