@@ -11,6 +11,9 @@
 #include "time.h"
 #include <string>
 
+#include "setupScene.h"
+
+
 using namespace std;
 
 //backup file
@@ -78,7 +81,7 @@ int main() {
     imageRough << imageWidth << ' ' << imageHeight << endl;
     imageRough << "255" << endl;
 
-    hittable_list world;
+    hittable_list world = setupScene("sphere.obj");
 
     /* dielectric test
     auto material_ground = make_shared<lambertian>(color(0.7, 0.3, 0.3));
@@ -96,6 +99,7 @@ int main() {
     //world.add(make_shared<sphere>(point3( 1.1,    0.0, -1.0),   0.5, material_right));
 */
 
+    /*
     auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
     auto material_center   = make_shared<lambertian>(color(0.1,0.2,0.5));
     auto material_left  = make_shared<dielectric>(1.5);
@@ -105,11 +109,11 @@ int main() {
     world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
     world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
     world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-
+*/
 
     vec3 rotation(0,1,0);
     point3 lookAt(0,0,-1);
-    point3 lookFrom(0,0,0);
+    point3 lookFrom(0,0,3);
     camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0);
 
    time_t startEstimate = time(NULL);
