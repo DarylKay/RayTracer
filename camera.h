@@ -5,21 +5,29 @@
 
 class camera {
 public:
-    camera() {}
+    camera(vec3 vup, point3 lookFrom, point3 lookAt, double aspectRatio, double vertFOVDeg) {
+        double viewportHeight = 2.0 * tan(degToRad(vertFOVDeg) / 2.0);
+        double viewportWidth = viewportHeight * aspectRatio;
+        double focalLength = 1.0;
 
-    const double aspectRatio = 16.0/9.0;
-    double viewportHeight = 2.0;
-    double viewportWidth = viewportHeight * aspectRatio;
-    double focalLength = 1.0;
+        vec3 w = unitVector(lookFrom - lookAt);
+        vec3 u = unitVector(cross(vup,w));
+        vec3 v = cross(w,u);
 
-    point3 origin = point3(0,0,0);
-    vec3 horizontal = vec3(viewportWidth, 0, 0);
-    vec3 vertical = vec3(0, viewportHeight, 0);
-    point3 lowerLeftCorner = origin - horizontal/2 - vertical/2 - vec3(0,0,focalLength);
+        origin = lookFrom;
+        horizontal = viewportWidth * u;
+        vertical = viewportHeight * v;
+        lowerLeftCorner = origin - horizontal / 2 - vertical / 2 - w;
+    }
 
     ray getRay(double u, double v) {
         return ray(origin, lowerLeftCorner + u*horizontal + v*vertical - origin);
     }
+
+    point3 origin;
+    vec3 horizontal;
+    vec3 vertical;
+    point3 lowerLeftCorner;
 };
 
 #endif //CAMERA_H

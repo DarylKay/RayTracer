@@ -7,18 +7,19 @@
 #include "color.h"
 #include "hittable_list.h"
 #include "sphere.h"
-
-
-#include "color.h"
+#include "triangle.h"
+#include "time.h"
+#include <string>
 
 using namespace std;
 
-//generate samples at each pixel
-//imperfect reflection
-//camera
-//dielectric
+//backup file
+//camera special effects
+//finish dielectric
 //emissive
 //brdf
+
+time_t start;
 
 color rayColor(const ray& r, const hittable& world, const int reflectLeft) {
     hit_record rec;
@@ -26,7 +27,7 @@ color rayColor(const ray& r, const hittable& world, const int reflectLeft) {
         return color(0,0,0);
     }
 
-    if(world.hit(r, 0.0001, infinity, rec)){
+    if(world.hit(r, epsilon, infinity, rec)){
         ray scattered;
         color attenuation;
 
@@ -42,10 +43,8 @@ color rayColor(const ray& r, const hittable& world, const int reflectLeft) {
 }
 
 int main() {
-    camera cam;
-
     const int imageOption = 3; //higher = higher res
-    int numSamples = 750;
+    int numSamples = 500;
 
     int imageWidth;
     if (imageOption == 4) {
@@ -62,6 +61,7 @@ int main() {
 
     const double aspectRatio = 16.0/9.0;
     const int imageHeight = (int)(imageWidth / aspectRatio);
+
     int maxBounce = 50;
 
     ofstream image;
@@ -71,27 +71,66 @@ int main() {
     image << imageWidth << ' ' << imageHeight << endl;
     image << "255" << endl;
 
-    shared_ptr<material> ground = make_shared<lambertian>(color(0.1,0.8,0.3));
-    shared_ptr<material> reflective = make_shared<metal>(color(0.8,0.8,0.8));
-    shared_ptr<material> teal = make_shared<lambertian>(color(0.01, 0.7, 0.7));
-    shared_ptr<material> coral = make_shared<lambertian>(color(0.99, 0.5, 0.33));
-    shared_ptr<material> maroon = make_shared<lambertian>(color(0.5, 0.01, 0.01));
+    ofstream imageRough;
+    imageRough.open("imageRough.ppm", ios::out);
 
-    //world
+    imageRough << "P3" << endl;
+    imageRough << imageWidth << ' ' << imageHeight << endl;
+    imageRough << "255" << endl;
+
     hittable_list world;
-    world.add(make_shared<sphere>(point3(80,40,-1001), 999, reflective));
-    world.add(make_shared<sphere>(point3(0,0,1001), 999, reflective));
-    world.add(make_shared<sphere>(point3(-.75,-0.34,-1.3), .6, maroon));
-    world.add(make_shared<sphere>(point3(.25,-0.28,-1.3), .3, coral));
-    world.add(make_shared<sphere>(point3(1.4,0.70,-1.3), .4, teal));
+
+    /* dielectric test
+    auto material_ground = make_shared<lambertian>(color(0.7, 0.3, 0.3));
+    auto material_left   = make_shared<dielectric>(1.5);
+    auto material_right  = make_shared<lambertian>(color(0.8, 0.6, 0.2));
+    auto material_triangle  = make_shared<metal>(color(0.8,0.8,0.8), 0.0);
+    auto material_center  = make_shared<dielectric>(1.5);
 
 
-    //world.add(make_shared<sphere>(point3(0,-1002,-1),1000, ground));
+    world.add(make_shared<triangle>(point3(10,-0.5,10),point3(0,-0.5,-10), point3(-10,-0.5, 10), false, material_triangle));
+    //world.add(make_shared<triangle>(point3(-100,-0.5, 100),point3(0,-0.5,-100),point3(100,-0.5,100), true, material_left));
+    //world.add(make_shared<triangle>(point3(-1,-0.5, -3),point3(0,1,-3),point3(1,-0.5,-3), true, material_right));
+    world.add(make_shared<sphere>(point3( 0.0,    0, -1.0),   0.5, material_ground));
+    //world.add(make_shared<sphere>(point3(-1.1,    0.0, -1.0),   0.5, material_left));
+    //world.add(make_shared<sphere>(point3( 1.1,    0.0, -1.0),   0.5, material_right));
+*/
+
+    auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
+    auto material_center   = make_shared<lambertian>(color(0.1,0.2,0.5));
+    auto material_left  = make_shared<dielectric>(1.5);
+    auto material_right  = make_shared<metal>(color(0.8,0.6,0.2), 0.0);
+
+    world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
+    world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
+    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
+    world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
 
 
+    vec3 rotation(0,1,0);
+    point3 lookAt(0,0,-1);
+    point3 lookFrom(0,0,0);
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0);
+
+   time_t startEstimate = time(NULL);
+    for (int j = imageHeight-1; j >= 0; --j) {
+        cerr << "\rEstimating time... Scanlines remaining: " << j << ' ' << std::flush;
+        for (int i = 0; i < imageWidth; ++i) {
+            color pixelColor(0, 0, 0);
+            double u = (i + randomDouble()) / (imageWidth-1);
+            double v = (j + randomDouble()) / (imageHeight-1);
+            ray r = cam.getRay(u, v);
+            pixelColor += rayColor(r, world, maxBounce);
+            writeColor(imageRough, pixelColor, 1);
+        }
+    }
+    time_t endEstimate = time(NULL);
+    double estimatedTime = difftime(endEstimate, startEstimate) * numSamples;
+
+    start = time(NULL);
 
     for (int j = imageHeight-1; j >= 0; --j) {
-        cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+        cerr <<"\rScanlines remaining: " << j << " | " << getTimeString(start, estimatedTime, j,imageHeight) << ' ' <<  std::flush;
         for (int i = 0; i < imageWidth; ++i) {
             color pixelColor(0, 0, 0);
             for (int s = 0; s < numSamples; ++s) {

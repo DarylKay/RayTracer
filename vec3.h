@@ -118,6 +118,16 @@ inline vec3 reflect(vec3 in, vec3 norm) {
     return in - 2 * dot(in, norm) * norm;
 }
 
+vec3 refract(const vec3 &in, const vec3 &n, double etaFraction) {
+    vec3 inNew = unitVector(in);
+    double cosTheta = dot(-inNew,n);
+    cosTheta = cosTheta > 1.0 ? 1.0 : cosTheta;
+    vec3 perpendicular = etaFraction * (inNew + cosTheta*n);
+    vec3 parallel = -sqrt(fabs(1.0 - perpendicular.lengthSquared())) * n;
+    return perpendicular + parallel;
+}
+
+
 using point3 = vec3; //3D point
 using color = vec3; //RGB Color
 

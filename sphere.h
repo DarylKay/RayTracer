@@ -39,7 +39,7 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
 
     rec.t = root;
     rec.p = r.at(root);
-    vec3 outwardNormal = (rec.p - center) / radius; //unit vector
+    vec3 outwardNormal = unitVector(rec.p - center); //unit vector
     rec.setFrontFace(r, outwardNormal);
     rec.material = material;
 
