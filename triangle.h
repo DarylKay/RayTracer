@@ -9,7 +9,9 @@ class triangle : public hittable {
     public:
         triangle();
         triangle(point3 p1, point3 p2, point3 p3, bool cw, shared_ptr<material> mat) : a(p1), b(p2), c(p3), clockWise(cw), material(mat){};
+
         bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
+        bool boundBox(double t_min, double t_max, aabb& box) const override;
 
         point3 a;
         point3 b;
@@ -42,21 +44,19 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
     point3 P = r.at(t);
 
     vec3 na = unitVector(cross(c - b, P - b));
-    vec3 nb = unitVector(cross(a - c, P - c));
-    vec3 nc = unitVector(cross(b - a, P - a));
-
     double alpha = dot(normal,na) / dot(normal, normal);
-    double beta = dot(normal,nb) / dot(normal,normal);
-    double gamma = dot(normal,nc) / dot(normal,normal);
-
     if (alpha < 0) {
         return false;
     }
 
+    vec3 nb = unitVector(cross(a - c, P - c));
+    double beta = dot(normal,nb) / dot(normal,normal);
     if (beta < 0) {
         return false;
     }
 
+    vec3 nc = unitVector(cross(b - a, P - a));
+    double gamma = dot(normal,nc) / dot(normal,normal);
     if (gamma < 0) {
         return false;
     }
@@ -66,6 +66,15 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
     vec3 outwardNormal = normal; //unit vector
     rec.setFrontFace(r, outwardNormal);
     rec.material = material;
+
+    return true;
+}
+
+bool triangle::boundBox(double t_min, double t_max, aabb& box) const {
+    point3 min = minVals(a, minVals(b,c));
+    point3 max = maxVals(a, maxVals(b,c));
+
+    box = aabb(min, max);
 
     return true;
 }

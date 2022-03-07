@@ -127,6 +127,14 @@ vec3 refract(const vec3 &in, const vec3 &n, double etaFraction) {
     return perpendicular + parallel;
 }
 
+inline vec3 minVals(const vec3 &a, const vec3 &b) {
+    return vec3(min(a.x(),b.x()), min(a.y(),b.y()), min(a.z(),b.z()));
+}
+
+inline vec3 maxVals(const vec3 &a, const vec3 &b) {
+    return vec3(max(a.x(),b.x()), max(a.y(),b.y()), max(a.z(),b.z()));
+}
+
 
 using point3 = vec3; //3D point
 using color = vec3; //RGB Color

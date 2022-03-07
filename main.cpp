@@ -17,6 +17,7 @@
 using namespace std;
 
 //backup file
+
 //camera special effects
 //finish dielectric
 //emissive
@@ -47,7 +48,7 @@ color rayColor(const ray& r, const hittable& world, const int reflectLeft) {
 
 int main() {
     const int imageOption = 3; //higher = higher res
-    int numSamples = 500;
+    int numSamples = 100;
 
     int imageWidth;
     if (imageOption == 4) {
@@ -68,20 +69,20 @@ int main() {
     int maxBounce = 50;
 
     ofstream image;
-    image.open("image.ppm", ios::out);
+    image.open("image2.ppm", ios::out);
 
     image << "P3" << endl;
     image << imageWidth << ' ' << imageHeight << endl;
     image << "255" << endl;
 
     ofstream imageRough;
-    imageRough.open("imageRough.ppm", ios::out);
+    imageRough.open("imageRough2.ppm", ios::out);
 
     imageRough << "P3" << endl;
     imageRough << imageWidth << ' ' << imageHeight << endl;
     imageRough << "255" << endl;
 
-    hittable_list world = setupScene("sphere.obj");
+    hittable_list world = setupScene("dino.obj");
 
     /* dielectric test
     auto material_ground = make_shared<lambertian>(color(0.7, 0.3, 0.3));
@@ -112,8 +113,8 @@ int main() {
 */
 
     vec3 rotation(0,1,0);
-    point3 lookAt(0,0,-1);
-    point3 lookFrom(0,0,3);
+    point3 lookAt(0,9,0);
+    point3 lookFrom(1,11,20);
     camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0);
 
    time_t startEstimate = time(NULL);

@@ -10,6 +10,8 @@ class sphere : public hittable {
         sphere();
         sphere(point3 cen, double rad, shared_ptr<material> mat) : center(cen), radius(rad), material(mat){};
         bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
+        bool boundBox(double t_min, double t_max, aabb& box) const override;
+
 
         point3 center;
         double radius;
@@ -43,6 +45,11 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
     rec.setFrontFace(r, outwardNormal);
     rec.material = material;
 
+    return true;
+}
+
+bool sphere::boundBox(double t_min, double t_max, aabb& box) const {
+    box = aabb(center - vec3(radius,radius,radius), center + vec3(radius,radius,radius));
     return true;
 }
 
