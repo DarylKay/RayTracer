@@ -48,11 +48,13 @@ bool hittable_list::boundBox(double time0, double time1, aabb& output_box) const
 
     for (const auto& object : objects) {
         if (!object->boundBox(time0, time1, temp_box)) return false;
-        output_box = first_box ? temp_box : surroundingBox(output_box, temp_box);
+        output_box = first_box ? temp_box : aabb::surroundingBox(output_box, temp_box);
         first_box = false;
     }
 
     return true;
 }
+
+
 
 #endif //HITTABLE_LIST_H

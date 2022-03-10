@@ -10,9 +10,13 @@
 #include "triangle.h"
 #include "time.h"
 #include <string>
+#include "bvh_node.h"
+
+//parallelism
+//#include <windows.h>
+//#include "mingw-std-threads-master/mingw.thread.h"
 
 #include "setupScene.h"
-
 
 using namespace std;
 
@@ -47,8 +51,12 @@ color rayColor(const ray& r, const hittable& world, const int reflectLeft) {
 }
 
 int main() {
+    //SYSTEM_INFO sysinfo;
+    //GetSystemInfo(&sysinfo);
+    //int numCPU = sysinfo.dwNumberOfProcessors;
+
     const int imageOption = 3; //higher = higher res
-    int numSamples = 100;
+    int numSamples = 250;
 
     int imageWidth;
     if (imageOption == 4) {
@@ -69,20 +77,22 @@ int main() {
     int maxBounce = 50;
 
     ofstream image;
-    image.open("image2.ppm", ios::out);
+    image.open("image.ppm", ios::out); //app for append
 
     image << "P3" << endl;
     image << imageWidth << ' ' << imageHeight << endl;
     image << "255" << endl;
 
     ofstream imageRough;
-    imageRough.open("imageRough2.ppm", ios::out);
+    imageRough.open("imageRough.ppm", ios::out);
 
     imageRough << "P3" << endl;
     imageRough << imageWidth << ' ' << imageHeight << endl;
     imageRough << "255" << endl;
 
-    hittable_list world = setupScene("dino.obj");
+    hittable_list worldSetup = setupScene("dino.obj");
+    hittable_list world;
+    world.add(make_shared<bvh_node>(worldSetup, 0, 1));
 
     /* dielectric test
     auto material_ground = make_shared<lambertian>(color(0.7, 0.3, 0.3));
@@ -135,6 +145,7 @@ int main() {
     start = time(NULL);
 
     for (int j = imageHeight-1; j >= 0; --j) {
+    //for (int j = 709; j >= 0; --j) {
         cerr <<"\rScanlines remaining: " << j << " | " << getTimeString(start, estimatedTime, j,imageHeight) << ' ' <<  std::flush;
         for (int i = 0; i < imageWidth; ++i) {
             color pixelColor(0, 0, 0);

@@ -43,20 +43,22 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
 
     point3 P = r.at(t);
 
+    double recipDot = 1 / dot (normal, normal);
+
     vec3 na = unitVector(cross(c - b, P - b));
-    double alpha = dot(normal,na) / dot(normal, normal);
+    double alpha = dot(normal,na) * recipDot;
     if (alpha < 0) {
         return false;
     }
 
     vec3 nb = unitVector(cross(a - c, P - c));
-    double beta = dot(normal,nb) / dot(normal,normal);
+    double beta = dot(normal,nb) * recipDot;
     if (beta < 0) {
         return false;
     }
 
     vec3 nc = unitVector(cross(b - a, P - a));
-    double gamma = dot(normal,nc) / dot(normal,normal);
+    double gamma = dot(normal,nc) * recipDot;
     if (gamma < 0) {
         return false;
     }

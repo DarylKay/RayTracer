@@ -6,9 +6,8 @@
 class aabb {
 public:
     aabb() {}
-    aabb(const point3 &a, const point3 &b) {
-        min = a;
-        max = b;
+    aabb(const point3 &a, const point3 &b) : min(a), max(b), centroid(.5f * min + .5f * max){
+        volume = (max.x() - min.x()) * (max.y() - min.y()) * (max.z() - min.z());
     }
 
     point3 minimum() const {return min;}
@@ -16,9 +15,14 @@ public:
 
     point3 min;
     point3 max;
+    point3 centroid;
+    double volume;
 
     bool hit(const ray &r, double t_min, double t_max) const;
-    aabb surroundingBox(aabb one, aabb two) const;
+
+    static aabb surroundingBox(aabb one, aabb two) {
+        return aabb(minVals(one.minimum(),two.minimum()), maxVals(one.maximum(),two.maximum()));
+    }
 };
 
 inline bool aabb::hit(const ray& r, double t_min, double t_max) const {
@@ -34,10 +38,6 @@ inline bool aabb::hit(const ray& r, double t_min, double t_max) const {
             return false;
     }
     return true;
-}
-
-inline aabb aabb::surroundingBox(aabb one, aabb two) const {
-    return aabb(minVals(one.minimum(),two.minimum()), maxVals(one.maximum(),two.maximum()));
 }
 
 #endif //AABB_H
