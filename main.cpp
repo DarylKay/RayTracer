@@ -11,11 +11,6 @@
 #include "time.h"
 #include <string>
 #include "bvh_node.h"
-
-//parallelism
-//#include <windows.h>
-//#include "mingw-std-threads-master/mingw.thread.h"
-
 #include "setupScene.h"
 
 using namespace std;
@@ -25,38 +20,39 @@ using namespace std;
 //camera special effects
 //finish dielectric
 //emissive
+//interpolated normals barycentric coordinated (for smoothness)
+//kd tree
+//surface area heuristic
+//texturing
+
 //brdf
 
 time_t start;
 
-color rayColor(const ray& r, const hittable& world, const int reflectLeft) {
+color rayColor(const ray& r, const hittable& world, const color& background, const int depth) {
     hit_record rec;
-    if (reflectLeft <=0){
+    if (depth <=0){
         return color(0,0,0);
     }
 
-    if(world.hit(r, epsilon, infinity, rec)){
-        ray scattered;
-        color attenuation;
-
-        if (rec.material->scatter(r, rec, attenuation, scattered)){
-            return attenuation * (rayColor(scattered, world, reflectLeft - 1));
-        }
-
-        return color(0,0,0);
+    if(!world.hit(r, epsilon, infinity, rec)) {
+        return background;
     }
-    vec3 unitDirection = unitVector(r.direction());
-    double t = 0.5*(unitDirection.y() + 1.0);
-    return (1.0-t)*color(1.0, 1.0, 1.0) + t*color(0.5, 0.7, 1.0);
+
+    ray scattered;
+    color attenuation;
+    color emitted = rec.material->emitted();
+
+    if (!rec.material->scatter(r, rec, attenuation, scattered)){
+        return emitted;
+    }
+
+    return emitted + attenuation * (rayColor(scattered, world, background, depth - 1));
 }
 
 int main() {
-    //SYSTEM_INFO sysinfo;
-    //GetSystemInfo(&sysinfo);
-    //int numCPU = sysinfo.dwNumberOfProcessors;
-
     const int imageOption = 3; //higher = higher res
-    int numSamples = 250;
+    int numSamples = 1000;
 
     int imageWidth;
     if (imageOption == 4) {
@@ -90,44 +86,32 @@ int main() {
     imageRough << imageWidth << ' ' << imageHeight << endl;
     imageRough << "255" << endl;
 
-    hittable_list worldSetup = setupScene("dino.obj");
+    auto material_light = make_shared<emissive>(color(10,10,10));
+
+    hittable_list worldSetup;// = setupScene("dino.obj");
+    worldSetup.add(make_shared<sphere>(point3(20,80,-18), 20, material_light));
+
+    auto material_ground = make_shared<lambertian>(color(0.042, 0.398, 0.134));
+    auto material_center   = make_shared<lambertian>(color(0.1,0.2,0.5));
+    auto material_left  = make_shared<dielectric>(1.5);
+    auto material_right  = make_shared<metal>(color(0.7,0.65,0.4), 0.0);
+
+    worldSetup.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
+    worldSetup.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
+    worldSetup.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
+    worldSetup.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
+
     hittable_list world;
     world.add(make_shared<bvh_node>(worldSetup, 0, 1));
 
-    /* dielectric test
-    auto material_ground = make_shared<lambertian>(color(0.7, 0.3, 0.3));
-    auto material_left   = make_shared<dielectric>(1.5);
-    auto material_right  = make_shared<lambertian>(color(0.8, 0.6, 0.2));
-    auto material_triangle  = make_shared<metal>(color(0.8,0.8,0.8), 0.0);
-    auto material_center  = make_shared<dielectric>(1.5);
-
-
-    world.add(make_shared<triangle>(point3(10,-0.5,10),point3(0,-0.5,-10), point3(-10,-0.5, 10), false, material_triangle));
-    //world.add(make_shared<triangle>(point3(-100,-0.5, 100),point3(0,-0.5,-100),point3(100,-0.5,100), true, material_left));
-    //world.add(make_shared<triangle>(point3(-1,-0.5, -3),point3(0,1,-3),point3(1,-0.5,-3), true, material_right));
-    world.add(make_shared<sphere>(point3( 0.0,    0, -1.0),   0.5, material_ground));
-    //world.add(make_shared<sphere>(point3(-1.1,    0.0, -1.0),   0.5, material_left));
-    //world.add(make_shared<sphere>(point3( 1.1,    0.0, -1.0),   0.5, material_right));
-*/
-
-    /*
-    auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    auto material_center   = make_shared<lambertian>(color(0.1,0.2,0.5));
-    auto material_left  = make_shared<dielectric>(1.5);
-    auto material_right  = make_shared<metal>(color(0.8,0.6,0.2), 0.0);
-
-    world.add(make_shared<sphere>(point3( 0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
-    world.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
-    world.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-*/
-
     vec3 rotation(0,1,0);
-    point3 lookAt(0,9,0);
-    point3 lookFrom(1,11,20);
+    point3 lookAt(0,0,-1);
+    point3 lookFrom(0,.75,0);
     camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0);
+    color background(0,0,0);
+    //color background(.7,.8,1);
 
-   time_t startEstimate = time(NULL);
+    time_t startEstimate = time(NULL);
     for (int j = imageHeight-1; j >= 0; --j) {
         cerr << "\rEstimating time... Scanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < imageWidth; ++i) {
@@ -135,7 +119,7 @@ int main() {
             double u = (i + randomDouble()) / (imageWidth-1);
             double v = (j + randomDouble()) / (imageHeight-1);
             ray r = cam.getRay(u, v);
-            pixelColor += rayColor(r, world, maxBounce);
+            pixelColor += rayColor(r, world, background, maxBounce);
             writeColor(imageRough, pixelColor, 1);
         }
     }
@@ -153,7 +137,7 @@ int main() {
                 double u = (i + randomDouble()) / (imageWidth-1);
                 double v = (j + randomDouble()) / (imageHeight-1);
                 ray r = cam.getRay(u, v);
-                pixelColor += rayColor(r, world, maxBounce);
+                pixelColor += rayColor(r, world, background, maxBounce);
             }
             writeColor(image, pixelColor, numSamples);
         }
