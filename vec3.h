@@ -135,6 +135,13 @@ inline vec3 maxVals(const vec3 &a, const vec3 &b) {
     return vec3(max(a.x(),b.x()), max(a.y(),b.y()), max(a.z(),b.z()));
 }
 
+vec3 random_in_unit_disk() {
+    while (true) {
+        auto p = vec3(randomDouble(-1,1), randomDouble(-1,1), 0);
+        if (p.lengthSquared() >= 1) continue;
+        return p;
+    }
+}
 
 using point3 = vec3; //3D point
 using color = vec3; //RGB Color
