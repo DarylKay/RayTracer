@@ -16,6 +16,12 @@ class sphere : public hittable {
         point3 center;
         double radius;
         shared_ptr<material> material;
+
+        void getSphereUV(double &u, double &v, point3& point){
+
+            u = (atan2(-point.z(), point.x()) + pi) * (1 / (2 * pi));
+            v = (acos(-point.y())) * (1 / pi);
+        }
 };
 
 bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {

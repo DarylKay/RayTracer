@@ -17,7 +17,7 @@ using namespace std;
 
 //backup file
 
-//camera special effects
+//halton sequence sampling
 //interpolated normals barycentric coordinated (for smoothness)
 //kd tree
 //surface area heuristic
@@ -97,7 +97,7 @@ color rayColor(const ray& r, const hittable& world, const color& background, con
 
 int main() {
     const int imageOption = 3; //higher = higher res
-    int numSamples = 1000;
+    int numSamples = 5000;
 
     int imageWidth;
     if (imageOption == 4) {
@@ -135,11 +135,11 @@ int main() {
     auto material_light2 = make_shared<emissive>(color(20,20,20));
 
 
-    hittable_list worldSetup = random_scene();// = setupScene("dino.obj");
+    hittable_list worldSetup;// = random_scene();// = setupScene("dino.obj");
     worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
-    worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
+    //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
 
-/*
+
     auto material_ground = make_shared<lambertian>(color(0.042, 0.398, 0.134));
     auto material_center   = make_shared<lambertian>(color(0.1,0.2,0.5));
     auto material_left  = make_shared<dielectric>(1.5);
@@ -149,16 +149,16 @@ int main() {
     worldSetup.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
     worldSetup.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
     worldSetup.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
-*/
+
     hittable_list world;
     world.add(make_shared<bvh_node>(worldSetup, 0, 1));
 
     vec3 rotation(0,1,0);
-    point3 lookFrom(13,2,3);
-    point3 lookAt(0,0,0);
+    point3 lookFrom(0.05,.6,0);
+    point3 lookAt(0,0,-1);
     double focalDistance = 10;
-    double aperture = .2;
-    camera cam(rotation, lookFrom, lookAt, aspectRatio, 25.0, focalDistance, aperture);
+    double aperture = 0;
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     color background(0,0,0);
     //color background(.7,.8,1);
 
@@ -179,14 +179,17 @@ int main() {
 
     start = time(NULL);
 
+    vector<point3> points = generatePoint(2, numSamples);
     for (int j = imageHeight-1; j >= 0; --j) {
     //for (int j = 709; j >= 0; --j) {
         cerr <<"\rScanlines remaining: " << j << " | " << getTimeString(start, estimatedTime, j,imageHeight) << ' ' <<  std::flush;
         for (int i = 0; i < imageWidth; ++i) {
             color pixelColor(0, 0, 0);
             for (int s = 0; s < numSamples; ++s) {
-                double u = (i + randomDouble()) / (imageWidth-1);
-                double v = (j + randomDouble()) / (imageHeight-1);
+                double u = (i + points[s].x()) / (imageWidth-1);
+                double v = (j + points[s].y()) / (imageHeight-1);
+                //double u = (i + randomDouble()) / (imageWidth-1);
+                //double v = (j + randomDouble()) / (imageHeight-1);
                 ray r = cam.getRay(u, v);
                 pixelColor += rayColor(r, world, background, maxBounce);
             }

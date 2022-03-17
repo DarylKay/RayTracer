@@ -6,6 +6,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <vector>
 
 #include <iomanip>
 #include <sstream>
@@ -100,7 +101,44 @@ string getTimeString(time_t start, double estimatedTime, double currentLine, dou
     return out;
 }
 
-#include "ray.h"
 #include "vec3.h"
+#include "ray.h"
+
+vector<point3> generatePoint(int dimension, int samples) {
+    vector<point3> genSamples;
+
+    int prime[] = {2,3,5,7,11,13,17,19,23,29,31};
+
+    double p[samples];
+    double h[samples * dimension];
+
+    double lognsamples = log(samples + 1);
+
+    for (int i = 0; i < dimension; i++) {
+        int b = prime[i];
+        int n = static_cast<int>(ceil(lognsamples / log(b)));
+        for (int t = 0; t < n; t++) {
+            p[t] = pow(b, -(t+1));
+        }
+
+        for (int j = 0; j < samples; j++) {
+            int d = j + 1;
+            double sum = fmod(d, b) * p[0];
+            for(int t = 1; t < n; t++) {
+                d = floor(d / b);
+                sum += fmod(d, b) * p[t];
+            }
+
+            h[j * dimension + i] = sum;
+        }
+    }
+
+    //works for 2D
+    for (int i = 0; i < samples * dimension; i += dimension) {
+        genSamples.push_back(point3(h[i], h[i+1], 0));
+    }
+
+    return genSamples;
+}
 
 #endif //RAY_TRACER_H
