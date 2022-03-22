@@ -1,6 +1,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#include "texture.h"
 #include "ray_tracer.h"
 
 struct hit_record;
@@ -53,7 +54,8 @@ public:
 
 class lambertian : public material {
 public:
-    lambertian(const color& a) : lambColor(a) {}
+    lambertian(const color& a) : albedo(make_shared<solid_color>(a)) {}
+    lambertian(shared_ptr<texture> a ) : albedo(a){}
 
     virtual bool scatter(
             const ray& r_in, const struct hit_record& rec, color& attenuation, ray& scattered
@@ -66,11 +68,12 @@ public:
 
         scattered = ray(rec.p, direction);
 
-        attenuation = lambColor;
+        attenuation = albedo->value(rec.u, rec.v, rec.p);
         return true;
     }
 
-    color lambColor;
+public:
+    shared_ptr<texture> albedo;
 };
 
 class dielectric : public material {

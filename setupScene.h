@@ -14,7 +14,7 @@ hittable_list setupScene(string file) {
     hittable_list scene;
 
     vector<point3> vertexList;
-
+    vector<double> u, v;
 
     if(infile.fail()) {
         cout << "ERROR: FILE COULD NOT BE OPENED";
@@ -34,9 +34,18 @@ hittable_list setupScene(string file) {
                 infile >> z;
 
                 vertexList.emplace_back(x, y, z);
+
+            } else if (s.compare("vt") == 0) {
+                double uIn, vIn;
+
+                infile >> uIn;
+                infile >> vIn;
+
+                u.emplace_back(uIn);
+                v.emplace_back(vIn);
             } else if (s.compare("f") == 0) {
                 string part1, part2, part3;
-                int p1, p2, p3;
+                int p1, p2, p3, v1, v2, v3;
 
                 infile >> part1;
                 infile >> part2;
@@ -46,15 +55,20 @@ hittable_list setupScene(string file) {
                 p2 = stoi(part2.substr(0, part2.find('/')), nullptr, 10) - 1;
                 p3 = stoi(part3.substr(0, part3.find('/')), nullptr, 10) - 1;
 
-                scene.add(make_shared<triangle>(vertexList[p1],vertexList[p2],vertexList[p3], false, material_center));
+                v1 = stoi(part1.substr(part1.rfind("/") + 1), nullptr, 10) - 1;
+                v2 = stoi(part2.substr(part2.rfind("/") + 1), nullptr, 10) - 1;
+                v3 = stoi(part3.substr(part3.rfind("/") + 1), nullptr, 10) - 1;
+
+                double uPut[] = {u[v1], u[v2], u[v3]};
+                double vPut[] = {v[v1], v[v2], v[v3]};
+
+                scene.add(make_shared<triangle>(vertexList[p1],vertexList[p2],vertexList[p3], false, material_center, uPut, vPut));
                 //scene.add(make_shared<triangle>(vertexList[p1] - point3(2.5,0,0),vertexList[p2] - point3(2.5,0,0),vertexList[p3] - point3(2.5,0,0), false, material_left));
                 //scene.add(make_shared<triangle>(vertexList[p1] + point3(2.5,0,0), vertexList[p2] + point3(2.5,0,0), vertexList[p3] + point3(2.5,0,0), false, material_right));
 
             }
         }
     }
-
-    scene.add(make_shared<sphere>(point3( 0.0, -1000, -1.0), 1000.0, material_ground));
 
     return scene;
 }

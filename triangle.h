@@ -8,7 +8,15 @@
 class triangle : public hittable {
     public:
         triangle();
-        triangle(point3 p1, point3 p2, point3 p3, bool cw, shared_ptr<material> mat) : a(p1), b(p2), c(p3), clockWise(cw), material(mat){};
+        triangle(point3 p1, point3 p2, point3 p3, bool cw, shared_ptr<material> mat, double u[], double v[]) : a(p1), b(p2), c(p3), clockWise(cw), material(mat){
+          uvU[0] = u[0];
+          uvU[1] = u[1];
+          uvU[2] = u[2];
+
+          uvV[0] = v[0];
+          uvV[1] = v[1];
+          uvV[2] = v[2];
+        };
 
         bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
         bool boundBox(double t_min, double t_max, aabb& box) const override;
@@ -17,9 +25,17 @@ class triangle : public hittable {
         point3 b;
         point3 c;
 
+        double uvU[3];
+        double uvV[3];
+
         bool clockWise;
 
         shared_ptr<material> material;
+
+        void getTriangleUV(double &u, double &v, double ba, double bb, double bc) const {
+            u = (ba * uvU[0] + bb * uvU[1] + bc * uvU[2]);
+            v = (ba * uvV[0] + bb * uvV[1] + bc * uvV[2]);
+        }
 };
 
 bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {
@@ -46,28 +62,34 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
     double recipDot = 1 / dot (normal, normal);
 
     vec3 na = unitVector(cross(c - b, P - b));
-    double alpha = dot(normal,na) * recipDot;
-    if (alpha < 0) {
+    double baryA = dot(normal,na) * recipDot;
+    if (baryA < 0) {
         return false;
     }
 
     vec3 nb = unitVector(cross(a - c, P - c));
-    double beta = dot(normal,nb) * recipDot;
-    if (beta < 0) {
+    double baryB = dot(normal,nb) * recipDot;
+    if (baryB < 0) {
         return false;
     }
 
     vec3 nc = unitVector(cross(b - a, P - a));
-    double gamma = dot(normal,nc) * recipDot;
-    if (gamma < 0) {
+    double baryC = dot(normal,nc) * recipDot;
+    if (baryC < 0) {
         return false;
     }
 
     rec.t = t;
     rec.p = P;
-    vec3 outwardNormal = normal; //unit vector
+    //vec3 outwardNormal = normal; //unit vector rigid triangles
+    vec3 outwardNormal = na * baryA + nb * baryB + nc * baryC; //interpolated normals with barrycentric coordinates
     rec.setFrontFace(r, outwardNormal);
+    getTriangleUV(rec.u, rec.v, baryA, baryB, baryC);
     rec.material = material;
+
+    double d0 = (P - a).length();
+    double d1 = (P - b).length();
+    double d2 = (P - c).length();
 
     return true;
 }
