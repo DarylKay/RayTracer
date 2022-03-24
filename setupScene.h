@@ -3,9 +3,12 @@
 
 hittable_list setupScene(string file) {
     auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
+    auto material_center = make_shared<lambertian>(color(0.1, 0.8, 0.2));
     auto material_left   = make_shared<dielectric>(1.5);
     auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
+
+    auto earth_texture = make_shared<image_texture>("earth.jpg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
 
     //read .OBJ file
     ifstream infile;
@@ -55,9 +58,9 @@ hittable_list setupScene(string file) {
                 p2 = stoi(part2.substr(0, part2.find('/')), nullptr, 10) - 1;
                 p3 = stoi(part3.substr(0, part3.find('/')), nullptr, 10) - 1;
 
-                v1 = stoi(part1.substr(part1.rfind("/") + 1), nullptr, 10) - 1;
-                v2 = stoi(part2.substr(part2.rfind("/") + 1), nullptr, 10) - 1;
-                v3 = stoi(part3.substr(part3.rfind("/") + 1), nullptr, 10) - 1;
+                v1 = stoi(part1.substr(part1.find('/') + 1, part1.rfind("/")), nullptr, 10) - 1;
+                v2 = stoi(part2.substr(part2.find('/') + 1, part2.rfind("/")), nullptr, 10) - 1;
+                v3 = stoi(part3.substr(part3.find('/') + 1, part3.rfind("/")), nullptr, 10) - 1;
 
                 double uPut[] = {u[v1], u[v2], u[v3]};
                 double vPut[] = {v[v1], v[v2], v[v3]};
@@ -65,7 +68,6 @@ hittable_list setupScene(string file) {
                 scene.add(make_shared<triangle>(vertexList[p1],vertexList[p2],vertexList[p3], false, material_center, uPut, vPut));
                 //scene.add(make_shared<triangle>(vertexList[p1] - point3(2.5,0,0),vertexList[p2] - point3(2.5,0,0),vertexList[p3] - point3(2.5,0,0), false, material_left));
                 //scene.add(make_shared<triangle>(vertexList[p1] + point3(2.5,0,0), vertexList[p2] + point3(2.5,0,0), vertexList[p3] + point3(2.5,0,0), false, material_right));
-
             }
         }
     }

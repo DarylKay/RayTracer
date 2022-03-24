@@ -7,7 +7,7 @@
 
 class triangle : public hittable {
     public:
-        triangle();
+        triangle() {};
         triangle(point3 p1, point3 p2, point3 p3, bool cw, shared_ptr<material> mat, double u[], double v[]) : a(p1), b(p2), c(p3), clockWise(cw), material(mat){
           uvU[0] = u[0];
           uvU[1] = u[1];
@@ -39,7 +39,7 @@ class triangle : public hittable {
 };
 
 bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {
-    vec3 normal = unitVector(cross(b - a, c - a));
+    vec3 normal = (cross(b - a, c - a));
 
     if (clockWise) {
         normal = -normal;
@@ -61,35 +61,35 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
 
     double recipDot = 1 / dot (normal, normal);
 
-    vec3 na = unitVector(cross(c - b, P - b));
+    vec3 na = (cross(c - b, P - b));
     double baryA = dot(normal,na) * recipDot;
     if (baryA < 0) {
         return false;
     }
 
-    vec3 nb = unitVector(cross(a - c, P - c));
+    vec3 nb = (cross(a - c, P - c));
     double baryB = dot(normal,nb) * recipDot;
     if (baryB < 0) {
         return false;
     }
 
-    vec3 nc = unitVector(cross(b - a, P - a));
+    vec3 nc = (cross(b - a, P - a));
     double baryC = dot(normal,nc) * recipDot;
     if (baryC < 0) {
         return false;
     }
 
+    if (baryA + baryB + baryC > 1 + epsilon){
+        return false;
+    }
+
     rec.t = t;
     rec.p = P;
-    //vec3 outwardNormal = normal; //unit vector rigid triangles
-    vec3 outwardNormal = na * baryA + nb * baryB + nc * baryC; //interpolated normals with barrycentric coordinates
+    //vec3 outwardNormal = unitVector(normal); //unit vector rigid triangles
+    vec3 outwardNormal = unitVector(na * baryA + nb * baryB + nc * baryC); //interpolated normals with barrycentric coordinates
     rec.setFrontFace(r, outwardNormal);
     getTriangleUV(rec.u, rec.v, baryA, baryB, baryC);
     rec.material = material;
-
-    double d0 = (P - a).length();
-    double d1 = (P - b).length();
-    double d2 = (P - c).length();
 
     return true;
 }

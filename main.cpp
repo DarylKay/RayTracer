@@ -8,6 +8,7 @@
 #include "hittable_list.h"
 #include "sphere.h"
 #include "triangle.h"
+#include "rectangle.h"
 #include "time.h"
 #include <string>
 #include "bvh_node.h"
@@ -17,13 +18,13 @@ using namespace std;
 
 //backup file
 
-//interpolated normals barycentric coordinated (for smoothness)
 //kd tree
+//environment mapping
 //surface area heuristic
-//texturing
 //surface area heuristic 3 trees for if the ray is on the x plane, y plane or z plane
 
 //brdf
+//point2
 
 time_t start;
 
@@ -95,8 +96,8 @@ color rayColor(const ray& r, const hittable& world, const color& background, con
 }
 
 int main() {
-    const int imageOption = 3; //higher = higher res
-    int numSamples = 500;
+    const int imageOption = 1; //higher = higher res
+    int numSamples = 15;
 
     int imageWidth;
     if (imageOption == 4) {
@@ -134,7 +135,50 @@ int main() {
     auto material_light2 = make_shared<emissive>(color(20,20,20));
 
 
-    hittable_list worldSetup = setupScene("dino.obj"); //= random_scene();
+    hittable_list worldSetup;//= setupScene("dino.obj"); //= random_scene();
+    //worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
+    //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
+
+    auto earth_texture = make_shared<image_texture>("earth.jpg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+
+    auto ball15 = make_shared<lambertian>(make_shared<image_texture>("Ball 15.jpg"));
+    auto ball4 = make_shared<lambertian>(make_shared<image_texture>("Ball4.jpg"));
+    auto ballcue = make_shared<lambertian>(make_shared<image_texture>("BallCue.jpg"));
+
+    auto grass = make_shared<lambertian>(make_shared<image_texture>("grass.jpg"));
+
+    auto checker = make_shared<checker_texture>(color(0.1, 0.1, 0.1), color(0.9, 0.9, 0.9));
+    auto material_ground = make_shared<lambertian>(color(0.042, 0.398, 0.134));
+    auto material_center   = make_shared<lambertian>(color(0.1,0.2,0.5));
+    auto material_left  = make_shared<dielectric>(1.5);
+    auto material_right  = make_shared<metal>(color(0.7,0.65,0.4), 0.0);
+
+    //worldSetup.add(make_shared<sphere>(point3( 0.0, -1000.5, -1.0), 1000, material_ground));
+    worldSetup.add(make_shared<xzRect>(-10,10,-10,10,-.5, grass));
+    worldSetup.add(make_shared<sphere>(point3( 0,    0.0, -1.0),   0.5, ball15));
+    worldSetup.add(make_shared<sphere>(point3(0,    0.0, 0),   0.5, ball4));
+    worldSetup.add(make_shared<sphere>(point3( 0,    0.0, 1.0),   0.5, ballcue));
+
+    //worldSetup.add(globe);
+
+    hittable_list world;
+    world.add(make_shared<bvh_node>(worldSetup, 0, 1));
+
+    vec3 rotation(0,1,0);
+    //point3 lookFrom(5,16,18);
+    point3 lookFrom(1.2,.7,0);
+    point3 lookAt(0,0,0);
+    double focalDistance = (lookFrom - lookAt).length();
+    double aperture = 0;
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
+    //color background(0,0,0);
+    color background(.7,.8,1);
+/*
+    auto material_light = make_shared<emissive>(color(15,15,15));
+    auto material_light2 = make_shared<emissive>(color(20,20,20));
+
+    hittable_list worldSetup;// = setupScene("dino.obj"); //= random_scene();
     //worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
     //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
 
@@ -144,23 +188,27 @@ int main() {
     auto material_left  = make_shared<dielectric>(1.5);
     auto material_right  = make_shared<metal>(color(0.7,0.65,0.4), 0.0);
 
+    auto earth_texture = make_shared<image_texture>("earth.jpg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    //auto globe = make_shared<sphere>(point3(0, 13, 0), 5, earth_surface);
+
     worldSetup.add(make_shared<sphere>(point3( 0.0, -1000.5, -1.0), 1000.0, make_shared<lambertian>(checker)));
-    //worldSetup.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, material_center));
-    //worldSetup.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
-    //worldSetup.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
+    worldSetup.add(make_shared<sphere>(point3( 0.0,    0.0, -1.0),   0.5, earth_surface));
+    worldSetup.add(make_shared<sphere>(point3(-1.0,    0.0, -1.0),   0.5, material_left));
+    worldSetup.add(make_shared<sphere>(point3( 1.0,    0.0, -1.0),   0.5, material_right));
 
     hittable_list world;
     world.add(make_shared<bvh_node>(worldSetup, 0, 1));
 
     vec3 rotation(0,1,0);
-    point3 lookFrom(5,16,18);
-    point3 lookAt(0,9,0);
+    point3 lookFrom(.1,.8,0);
+    point3 lookAt(0,0,-1);
     double focalDistance = (lookFrom - lookAt).length();
     double aperture = .1;
     camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     //color background(0,0,0);
     color background(.7,.8,1);
-
+*/
     time_t startEstimate = time(NULL);
     for (int j = imageHeight-1; j >= 0; --j) {
         cerr << "\rEstimating time... Scanlines remaining: " << j << ' ' << std::flush;

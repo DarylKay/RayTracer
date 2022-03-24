@@ -24,7 +24,7 @@ public:
         tmCamClose = timeClose;
     }
 
-    ray getRay(double s, double t) {
+    ray getRay(double s, double t) const {
         vec3 inAperture = lensRadius * random_in_unit_disk();
         vec3 offset = u*inAperture.x() + v*inAperture.y();
 

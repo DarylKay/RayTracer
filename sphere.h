@@ -7,8 +7,9 @@
 
 class sphere : public hittable {
     public:
-        sphere();
-        sphere(point3 cen, double rad, shared_ptr<material> mat) : center(cen), radius(rad), material(mat){};
+        sphere() {};
+        sphere(point3 cen, double rad, shared_ptr<material> mat) : center(cen), radius(rad), material(mat){
+        };
         bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
         bool boundBox(double t_min, double t_max, aabb& box) const override;
 
