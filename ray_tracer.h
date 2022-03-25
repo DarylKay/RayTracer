@@ -104,7 +104,7 @@ string getTimeString(time_t start, double estimatedTime, double currentLine, dou
 #include "vec3.h"
 #include "ray.h"
 
-vector<point3> generatePoint(int dimension, int samples) {
+vector<point3> generateSamples(int dimension, int samples) {
     vector<point3> genSamples;
 
     int prime[] = {2,3,5,7,11,13,17,19,23,29,31};

@@ -5,6 +5,19 @@
 
 class camera {
 public:
+    camera(const camera &cam){
+        origin = cam.origin;
+        u = cam.u;
+        v = cam.v;
+        w = cam.w;
+        horizontal = cam.horizontal;
+        vertical = cam.vertical;
+        origin = cam.origin;
+        lowerLeftCorner = cam.lowerLeftCorner;
+        lensRadius = cam.lensRadius;
+        tmCamOpen = cam.tmCamOpen;
+        tmCamClose = cam.tmCamClose;
+    };
     camera(vec3 vup, point3 lookFrom, point3 lookAt, double aspectRatio, double vertFOVDeg, double focalDistance, double aperture, double timeOpen, double timeClose) {
         double viewportHeight = 2.0 * tan(degToRad(vertFOVDeg) / 2.0);
         double viewportWidth = viewportHeight * aspectRatio;

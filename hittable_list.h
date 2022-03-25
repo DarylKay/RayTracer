@@ -55,6 +55,4 @@ bool hittable_list::boundBox(double time0, double time1, aabb& output_box) const
     return true;
 }
 
-
-
 #endif //HITTABLE_LIST_H

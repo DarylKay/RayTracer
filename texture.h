@@ -59,6 +59,8 @@ public:
     image_texture(const char *filename) {
         auto components_per_pixel = bytes_per_pixel;
 
+        cerr << "\rLoading image: " << filename << " " << std::flush;
+
         data = stbi_load(
                 filename, &width, &height, &components_per_pixel, components_per_pixel);
 
