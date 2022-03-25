@@ -5,6 +5,8 @@
 
 class camera {
 public:
+    camera() {}
+
     camera(const camera &cam){
         origin = cam.origin;
         u = cam.u;

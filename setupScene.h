@@ -6,6 +6,8 @@ hittable_list setupScene(string file) {
     auto material_center = make_shared<lambertian>(color(0.1, 0.8, 0.2));
     auto material_left   = make_shared<dielectric>(1.5);
     auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
+    auto mirror  = make_shared<metal>(color(0.7,0.7,0.7), 0.0);
+
 
     auto earth_texture = make_shared<image_texture>("earth.jpg");
     auto earth_surface = make_shared<lambertian>(earth_texture);
@@ -65,7 +67,7 @@ hittable_list setupScene(string file) {
                 double uPut[] = {u[v1], u[v2], u[v3]};
                 double vPut[] = {v[v1], v[v2], v[v3]};
 
-                scene.add(make_shared<triangle>(vertexList[p1],vertexList[p2],vertexList[p3], false, material_center, uPut, vPut));
+                scene.add(make_shared<triangle>(vertexList[p1],vertexList[p2],vertexList[p3], false, mirror, uPut, vPut));
                 //scene.add(make_shared<triangle>(vertexList[p1] - point3(2.5,0,0),vertexList[p2] - point3(2.5,0,0),vertexList[p3] - point3(2.5,0,0), false, material_left));
                 //scene.add(make_shared<triangle>(vertexList[p1] + point3(2.5,0,0), vertexList[p2] + point3(2.5,0,0), vertexList[p3] + point3(2.5,0,0), false, material_right));
             }
