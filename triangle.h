@@ -8,7 +8,7 @@
 class triangle : public hittable {
     public:
         triangle() {};
-        triangle(point3 p1, point3 p2, point3 p3, bool cw, shared_ptr<material> mat, double u[], double v[]) : a(p1), b(p2), c(p3), clockWise(cw), material(mat){
+        triangle(point3 p1, point3 p2, point3 p3, bool cw, shared_ptr<material> mat, double u[], double v[], bool useGivenNorm, vec3 n[]) : a(p1), b(p2), c(p3), clockWise(cw), material(mat){
           uvU[0] = u[0];
           uvU[1] = u[1];
           uvU[2] = u[2];
@@ -16,6 +16,14 @@ class triangle : public hittable {
           uvV[0] = v[0];
           uvV[1] = v[1];
           uvV[2] = v[2];
+
+          if (useGivenNorm) {
+              normals[0] = n[0];
+              normals[1] = n[1];
+              normals[2] = n[2];
+          }
+
+          calculateNormal = !useGivenNorm;
         };
 
         bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
@@ -27,6 +35,9 @@ class triangle : public hittable {
 
         double uvU[3];
         double uvV[3];
+
+        vec3 normals[3];
+        bool calculateNormal;
 
         bool clockWise;
 
@@ -86,7 +97,12 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
     rec.t = t;
     rec.p = P;
     //vec3 outwardNormal = unitVector(normal); //unit vector rigid triangles
-    vec3 outwardNormal = unitVector(na * baryA + nb * baryB + nc * baryC); //interpolated normals with barrycentric coordinates
+    vec3 outwardNormal;
+    if (calculateNormal) {
+        outwardNormal = unitVector(na * baryA + nb * baryB + nc * baryC); //interpolated normals with barrycentric coordinates
+    } else {
+        outwardNormal = unitVector(normals[0] * baryA + normals[1] * baryB + normals[2] * baryC); //interpolated normals with barrycentric coordinates
+    }
     rec.setFrontFace(r, outwardNormal);
     getTriangleUV(rec.u, rec.v, baryA, baryB, baryC);
     rec.material = material;

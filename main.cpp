@@ -31,10 +31,13 @@ using namespace std;
 //point2
 //rotate rectangles
 //cases for setting up a scene
+//glossy
 
 //spectral imaging - show the light breaking up over a cylinder
 
 
+//Add a light to the scene (sun)
+//debugging for the fog
 //fog under the dinosaur but have the fog be able to have a function of being very foggy in the middle and not foggy on the outside
 //take 2 different probability functions and then depending on the x and z values, make it logarithic
 //perlin noise for the fog as well, pass in a perlin noise texture
@@ -64,14 +67,14 @@ color rayColor(const ray& r, const hittable& world, const background& bGround, c
 
 int main() {
     string imageName = "dino";
-    int numSamples = 20;
+    int numSamples = 100;
 
     bool animation = false;
     double duration = 1;
     double fps = 1;
     int frames = static_cast<int>(duration * fps);
 
-    const int imageOption = 1; //higher = higher res
+    const int imageOption = 3; //higher = higher res
 
     int imageWidth;
     switch(imageOption) {
@@ -102,7 +105,7 @@ int main() {
     auto material_light = make_shared<emissive>(color(15,15,15));
     auto material_light2 = make_shared<emissive>(color(20,20,20));
 
-    hittable_list worldSetup = setupScene("assets/dino.obj"); //= random_scene();
+    hittable_list worldSetup = setupScene("assets/dinosmooth1.obj"); //= random_scene();
     //worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
     //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
 
@@ -131,8 +134,8 @@ int main() {
 
     auto white = make_shared<lambertian>(color(.73,.73,.73));
 
-    shared_ptr<hittable> boxFog = make_shared<box>(point3(-10,-1,-5), point3(10, 2,5), white);
-    worldSetup.add(make_shared<constant_medium>(boxFog, 0.01, color(1,1,1)));
+    shared_ptr<hittable> boxFog = make_shared<box>(point3(-20,-1,-10), point3(20, 4,10), white);
+    worldSetup.add(make_shared<constant_medium>(boxFog, 0.4, color(1,1,1)));
 
     hittable_list world;
     world.add(make_shared<bvh_node>(worldSetup, 0, 1));
@@ -140,14 +143,15 @@ int main() {
     //color background(0,0,0);
     //color background(.7,.8,1);
     environment_map bGround("assets/Skybox-night");
+    //solid_background bGround(color(.7,.8,1));
 
     /*CAMERA----------------------------------------------------------------------------------------------------------*/
 
     vec3 rotation(0,1,0);
-    point3 lookFrom(2,16,15);
+    point3 lookFrom(-2,16,20);
     //point3 lookFrom(5,16,18);
     //point3 lookFrom(1.2,-.7,0);
-    point3 lookAt(0,8,0);
+    point3 lookAt(0,9,0);
     //point3 lookAt(0,0,0);
     double focalDistance = (lookFrom - lookAt).length();
     double aperture = 0;
