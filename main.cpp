@@ -18,6 +18,7 @@
 #include "setupScene.h"
 #include "background.h"
 #include "constant_medium.h"
+#include <thread>
 
 using namespace std;
 
@@ -42,7 +43,47 @@ using namespace std;
 //take 2 different probability functions and then depending on the x and z values, make it logarithic
 //perlin noise for the fog as well, pass in a perlin noise texture
 
+
+
 time_t start;
+
+hittable_list random_scene() {
+    hittable_list world;
+    auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
+    //world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            auto choose_mat = randomDouble();
+            point3 center(a + 0.9*randomDouble(), 0.2, b + 0.9*randomDouble());
+            if ((center - point3(4, 0.2, 0)).length() > 0.9) {
+                shared_ptr<material> sphere_material;
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = color(randomDouble(),randomDouble(),randomDouble()) * color(randomDouble(),randomDouble(),randomDouble());
+                    sphere_material = make_shared<lambertian>(albedo);
+                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                } else if (choose_mat < 0.95) {
+                    // metal
+                    auto albedo = randomVec(0.5, 1);
+                    auto fuzz = randomDouble(0, 0.5);
+                    sphere_material = make_shared<metal>(albedo, fuzz);
+                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                } else {
+                    // glass
+                    sphere_material = make_shared<dielectric>(1.5);
+                    world.add(make_shared<sphere>(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+    auto material1 = make_shared<dielectric>(1.5);
+    world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
+    auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
+    world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
+    auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
+    world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
+    return world;
+}
 
 color rayColor(const ray& r, const hittable& world, const background& bGround, const int depth) {
     hit_record rec;
@@ -65,9 +106,31 @@ color rayColor(const ray& r, const hittable& world, const background& bGround, c
     return emitted + attenuation * (rayColor(scattered, world, bGround, depth - 1));
 }
 
+void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<point3> points, camera& usingCam, hittable_list& world, environment_map bGround, int numSamples, int recursiveDepth, vector<color> &returnColor) {
+    vector<color> retVals;
+
+    for (int row = 0; row < numRows; ++row) {
+        for (int i = 0; i < imageWidth; ++i) {
+            color pixelColor(0, 0, 0);
+            for (int s = 0; s < numSamples; ++s) {
+                double u = (i + points[s].x()) / (imageWidth - 1);
+                double v = ((j - row) + points[s].y()) / (imageHeight - 1);
+                ray r = usingCam.getRay(u, v);
+                pixelColor += rayColor(r, world, bGround, recursiveDepth);
+            }
+            retVals.emplace_back(pixelColor);
+        }
+    }
+
+    returnColor = retVals;
+}
+
 int main() {
-    string imageName = "dino";
-    int numSamples = 100;
+    string imageName = "ballsWithFog";
+    int numSamples = 1000;
+
+    int processor_count = thread::hardware_concurrency();
+    int threadRowSize = 10;
 
     bool animation = false;
     double duration = 1;
@@ -88,7 +151,7 @@ int main() {
             imageWidth = 1280;//720p
             break;
         case 1:
-            imageWidth = 720;//480p
+            imageWidth = 852;//480p
             break;
         default:
             imageWidth = 400;
@@ -105,7 +168,7 @@ int main() {
     auto material_light = make_shared<emissive>(color(15,15,15));
     auto material_light2 = make_shared<emissive>(color(20,20,20));
 
-    hittable_list worldSetup = setupScene("assets/dinosmooth1.obj"); //= random_scene();
+    hittable_list worldSetup = random_scene(); //= setupScene("assets/dinosmooth1.obj");
     //worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
     //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
 
@@ -134,28 +197,28 @@ int main() {
 
     auto white = make_shared<lambertian>(color(.73,.73,.73));
 
-    shared_ptr<hittable> boxFog = make_shared<box>(point3(-20,-1,-10), point3(20, 4,10), white);
-    worldSetup.add(make_shared<constant_medium>(boxFog, 0.4, color(1,1,1)));
+    shared_ptr<hittable> boxFog = make_shared<box>(point3(-30,-1,-30), point3(30, 4,30), white);
+    worldSetup.add(make_shared<constant_medium>(boxFog, 0.01, color(1,1,1)));
 
     hittable_list world;
     world.add(make_shared<bvh_node>(worldSetup, 0, 1));
 
     //color background(0,0,0);
     //color background(.7,.8,1);
-    environment_map bGround("assets/Skybox-night");
+    environment_map bGround("assets/Skybox-day");
     //solid_background bGround(color(.7,.8,1));
 
     /*CAMERA----------------------------------------------------------------------------------------------------------*/
 
     vec3 rotation(0,1,0);
-    point3 lookFrom(-2,16,20);
+    point3 lookFrom(13,2,3);
     //point3 lookFrom(5,16,18);
     //point3 lookFrom(1.2,-.7,0);
-    point3 lookAt(0,9,0);
-    //point3 lookAt(0,0,0);
-    double focalDistance = (lookFrom - lookAt).length();
-    double aperture = 0;
-    camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
+    //point3 lookAt(0,9,0);
+    point3 lookAt(0,0,0);
+    double focalDistance = 10.0;//(lookFrom - lookAt).length();
+    double aperture = 0.1;
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 45.0, focalDistance, aperture, 0,0);
     movingCamera movCam(rotation, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     frameMaker camLocationGenerator(lookFrom, lookAt);
     camLocationGenerator.generateYSpin(&movCam, duration, fps);
@@ -194,7 +257,7 @@ int main() {
     }
 
     time_t endEstimate = time(NULL);
-    double estimatedTime = difftime(endEstimate, startEstimate) * numSamples;
+    double estimatedTime = (difftime(endEstimate, startEstimate) * numSamples) / processor_count;
 
     /*RAYTRACER-------------------------------------------------------------------------------------------------------*/
 
@@ -217,19 +280,43 @@ int main() {
         }
 
         start = time(NULL);
-        for (int j = imageHeight - 1; j >= 0; --j) {
+        for (int j = imageHeight - 1; j >= 0; j -= (4 * threadRowSize)) {
             cerr << "\rFrame: " << camNum + 1 << "/" << frames << " | Scanlines remaining: " << j << " | " << getTimeString(start, estimatedTime, j, imageHeight)
                  << ' ' << std::flush;
-            for (int i = 0; i < imageWidth; ++i) {
+
+            vector<color> colorVector1;
+            vector<color> colorVector2;
+            vector<color> colorVector3;
+            vector<color> colorVector4;
+
+            thread t1 (calculateRow, threadRowSize, j - (0 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector1));
+            thread t2 (calculateRow, threadRowSize, j - (1 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector2));
+            thread t3 (calculateRow, threadRowSize, j - (2 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector3));
+            thread t4 (calculateRow, threadRowSize, j - (3 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector4));
+
+            t1.join();
+            writeColor(image, colorVector1, numSamples);
+
+            t2.join();
+            writeColor(image, colorVector2, numSamples);
+
+            t3.join();
+            writeColor(image, colorVector3, numSamples);
+
+            t4.join();
+            writeColor(image, colorVector4, numSamples);
+
+
+            /*for (int i = 0; i < imageWidth; ++i) {
                 color pixelColor(0, 0, 0);
-                for (int s = 0; s < numSamples; ++s) {
+                for (int s = 0; s < numSamples / 4; ++s) {
                     double u = (i + points[s].x()) / (imageWidth - 1);
                     double v = (j + points[s].y()) / (imageHeight - 1);
                     ray r = usingCam.getRay(u, v);
                     pixelColor += rayColor(r, world, bGround, recursiveDepth);
                 }
                 writeColor(image, pixelColor, numSamples);
-            }
+            }*/
         }
         image.close();
     }

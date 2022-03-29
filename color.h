@@ -23,4 +23,11 @@ void writeColor(ostream &os, color pixelColor, int samples) {
        << (int)(255.999 * clamp(b,0.0,1.0)) << '\n';
 }
 
+void writeColor(ostream &os, vector<vec3> pixelRow, int samples) {
+        for (int i = 0; i < pixelRow.size(); i++) {
+            writeColor(os, pixelRow[i], samples);
+        }
+        os << std::flush;
+}
+
 #endif //COLOR_H
