@@ -51,7 +51,18 @@ using namespace std;
 //fog bug
 //Be able to randomly generate points on the fly
 //BRDF - materials start with lambertian, metal and glossy, and then others
-//BSSRDF Subsurface scattering
+
+/*
+Goals for the end of the semester:
+-Radiance
+-Spectral
+-Bidirectional lighting for better lit scenes
+-BRDF: fresnel, geometry, normal distribution
+-BTDF
+-BSDF as a mix
+-Disney BSDF?
+*/
+
 
 time_t start;
 
