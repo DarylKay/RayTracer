@@ -20,8 +20,8 @@ class sphere : public hittable {
 
         void getSphereUV(double &u, double &v, point3& point) const {
 
-            u = (atan2(-point.z(), point.x()) + pi) * (1 / (2 * pi));
-            v = (acos(-point.y())) * (1 / pi);
+            u = (atan2(-point.z(), point.x() + randomDouble(0,pi)) + pi) * (1 / (2 * pi));
+            v = (acos(-point.y() + randomDouble(0,pi))) * (1 / pi);
         }
 };
 

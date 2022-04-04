@@ -24,11 +24,16 @@ using namespace std;
 
 //TO-DO
 
+//brdf
+//shadow rays
+//bidirectional lighting
+//mixture of sending rays from lights and sending rays from camera
+//spectral imaging - light refraction and thin film spheres, chrome bubble, diamond glistening
+
 //backup file
 //kd tree
 //surface area heuristic
 //surface area heuristic 3 trees for if the ray is on the x plane, y plane or z plane
-//brdf
 //point2
 //rotate rectangles
 //cases for setting up a scene
@@ -36,14 +41,17 @@ using namespace std;
 
 //spectral imaging - show the light breaking up over a cylinder
 
-
 //Add a light to the scene (sun)
 //debugging for the fog
 //fog under the dinosaur but have the fog be able to have a function of being very foggy in the middle and not foggy on the outside
 //take 2 different probability functions and then depending on the x and z values, make it logarithic
 //perlin noise for the fog as well, pass in a perlin noise texture
 
-
+//tile texture, randomize in cos function rather than in just u and v
+//fog bug
+//Be able to randomly generate points on the fly
+//BRDF - materials start with lambertian, metal and glossy, and then others
+//BSSRDF Subsurface scattering
 
 time_t start;
 
