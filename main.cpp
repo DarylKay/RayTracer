@@ -48,7 +48,6 @@ using namespace std;
 //perlin noise for the fog as well, pass in a perlin noise texture
 
 //tile texture, randomize in cos function rather than in just u and v
-//fog bug
 //Be able to randomly generate points on the fly
 //BRDF - materials start with lambertian, metal and glossy, and then others
 
@@ -146,7 +145,7 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 
 int main() {
     string imageName = "ballsWithFog";
-    int numSamples = 1000;
+    int numSamples = 20;
 
     int processor_count = thread::hardware_concurrency();
     int threadRowSize = 10;
@@ -187,7 +186,9 @@ int main() {
     auto material_light = make_shared<emissive>(color(15,15,15));
     auto material_light2 = make_shared<emissive>(color(20,20,20));
 
-    hittable_list worldSetup = random_scene(); //= setupScene("assets/dinosmooth1.obj");
+    //hittable_list worldSetup = random_scene(); //= setupScene("assets/dinosmooth1.obj");
+    hittable_list worldSetup = setupScene("assets/dinosmooth1.obj");
+
     //worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
     //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
 
@@ -216,28 +217,28 @@ int main() {
 
     auto white = make_shared<lambertian>(color(.73,.73,.73));
 
-    shared_ptr<hittable> boxFog = make_shared<box>(point3(-30,-1,-30), point3(30, 4,30), white);
-    worldSetup.add(make_shared<constant_medium>(boxFog, 0.01, color(1,1,1)));
+    shared_ptr<hittable> boxFog = make_shared<box>(point3(-50,-1,-30), point3(50, 4,30), white);
+    worldSetup.add(make_shared<constant_medium>(boxFog, 0.04, color(1,1,1)));
 
     hittable_list world;
     world.add(make_shared<bvh_node>(worldSetup, 0, 1));
 
     //color background(0,0,0);
     //color background(.7,.8,1);
-    environment_map bGround("assets/Skybox-day");
+    environment_map bGround("assets/Skybox-night");
     //solid_background bGround(color(.7,.8,1));
 
     /*CAMERA----------------------------------------------------------------------------------------------------------*/
 
     vec3 rotation(0,1,0);
-    point3 lookFrom(13,2,3);
-    //point3 lookFrom(5,16,18);
+    //point3 lookFrom(13,2,3);
+    point3 lookFrom(5,16,18);
     //point3 lookFrom(1.2,-.7,0);
-    //point3 lookAt(0,9,0);
-    point3 lookAt(0,0,0);
+    point3 lookAt(0,9,0);
+    //point3 lookAt(0,0,0);
     double focalDistance = 10.0;//(lookFrom - lookAt).length();
     double aperture = 0.1;
-    camera cam(rotation, lookFrom, lookAt, aspectRatio, 45.0, focalDistance, aperture, 0,0);
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     movingCamera movCam(rotation, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     frameMaker camLocationGenerator(lookFrom, lookAt);
     camLocationGenerator.generateYSpin(&movCam, duration, fps);

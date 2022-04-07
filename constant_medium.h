@@ -41,7 +41,7 @@ bool constant_medium::hit(const ray &r, double t_min, double t_max, hit_record &
         return false;
     }
 
-    if (rec.t < 0) {
+    if (rec1.t < 0) {
         rec1.t = 0;
     }
 
@@ -61,7 +61,7 @@ bool constant_medium::hit(const ray &r, double t_min, double t_max, hit_record &
     rec.front_face = true;
     rec.material = isotropicFunction;
 
-    return false;
+    return true;
 }
 
 #endif //CONSTANT_MEDIUM_H
