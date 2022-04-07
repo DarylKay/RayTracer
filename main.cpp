@@ -35,14 +35,12 @@ using namespace std;
 //surface area heuristic
 //surface area heuristic 3 trees for if the ray is on the x plane, y plane or z plane
 //point2
-//rotate rectangles
 //cases for setting up a scene
 //glossy
 
 //spectral imaging - show the light breaking up over a cylinder
 
 //Add a light to the scene (sun)
-//debugging for the fog
 //fog under the dinosaur but have the fog be able to have a function of being very foggy in the middle and not foggy on the outside
 //take 2 different probability functions and then depending on the x and z values, make it logarithic
 //perlin noise for the fog as well, pass in a perlin noise texture
@@ -103,6 +101,24 @@ hittable_list random_scene() {
     return world;
 }
 
+hittable_list cornell_box() {
+    hittable_list objects;
+
+    auto red   = make_shared<lambertian>(color(.65, .05, .05));
+    auto white = make_shared<lambertian>(color(.73, .73, .73));
+    auto green = make_shared<lambertian>(color(.12, .45, .15));
+    auto light = make_shared<emissive>(color(15, 15, 15));
+
+    objects.add(make_shared<yzRect>(0, 555, 0, 555, 555, green));
+    objects.add(make_shared<yzRect>(0, 555, 0, 555, 0, red));
+    objects.add(make_shared<xzRect>(213, 343, 227, 332, 554, light));
+    objects.add(make_shared<xzRect>(0, 555, 0, 555, 0, white));
+    objects.add(make_shared<xzRect>(0, 555, 0, 555, 555, white));
+    objects.add(make_shared<xyRect>(0, 555, 0, 555, 555, white));
+
+    return objects;
+}
+
 color rayColor(const ray& r, const hittable& world, const background& bGround, const int depth) {
     hit_record rec;
     if (depth <=0){
@@ -124,7 +140,7 @@ color rayColor(const ray& r, const hittable& world, const background& bGround, c
     return emitted + attenuation * (rayColor(scattered, world, bGround, depth - 1));
 }
 
-void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<point3> points, camera& usingCam, hittable_list& world, environment_map bGround, int numSamples, int recursiveDepth, vector<color> &returnColor) {
+void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<point3> points, camera& usingCam, hittable_list& world, background& bGround, int numSamples, int recursiveDepth, vector<color> &returnColor) {
     vector<color> retVals;
 
     for (int row = 0; row < numRows; ++row) {
@@ -144,8 +160,8 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 }
 
 int main() {
-    string imageName = "ballsWithFog";
-    int numSamples = 20;
+    string imageName = "CornellBoxFirst";
+    int numSamples = 50;
 
     int processor_count = thread::hardware_concurrency();
     int threadRowSize = 10;
@@ -155,7 +171,7 @@ int main() {
     double fps = 1;
     int frames = static_cast<int>(duration * fps);
 
-    const int imageOption = 3; //higher = higher res
+    const int imageOption = 2; //higher = higher res
 
     int imageWidth;
     switch(imageOption) {
@@ -176,7 +192,7 @@ int main() {
             break;
     }
 
-    const double aspectRatio = 16.0/9.0;
+    const double aspectRatio = 1.0;//16.0/9.0;
     const int imageHeight = (int)(imageWidth / aspectRatio);
 
     int recursiveDepth = 50;
@@ -186,8 +202,21 @@ int main() {
     auto material_light = make_shared<emissive>(color(15,15,15));
     auto material_light2 = make_shared<emissive>(color(20,20,20));
 
-    //hittable_list worldSetup = random_scene(); //= setupScene("assets/dinosmooth1.obj");
-    hittable_list worldSetup = setupScene("assets/dinosmooth1.obj");
+
+    auto white = make_shared<lambertian>(color(.73,.73,.73));
+
+
+    hittable_list worldSetup = cornell_box();
+    shared_ptr<hittable> box1 = make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
+    box1 = make_shared<rotateY>(box1, 15);
+    box1 = make_shared<translate>(box1, vec3(265,0,295));
+    worldSetup.add(box1);
+
+    shared_ptr<hittable> box2 = make_shared<box>(point3(0,0,0), point3(165,165,165), white);
+    box2 = make_shared<rotateY>(box2, -18);
+    box2 = make_shared<translate>(box2, vec3(130,0,65));
+    worldSetup.add(box2);
+    //hittable_list worldSetup = setupScene("assets/dinosmooth1.obj");
 
     //worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
     //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
@@ -215,30 +244,31 @@ int main() {
 
     //worldSetup.add(globe);
 
-    auto white = make_shared<lambertian>(color(.73,.73,.73));
 
-    shared_ptr<hittable> boxFog = make_shared<box>(point3(-50,-1,-30), point3(50, 4,30), white);
-    worldSetup.add(make_shared<constant_medium>(boxFog, 0.04, color(1,1,1)));
+    //shared_ptr<hittable> boxFog = make_shared<box>(point3(-50,-1,-30), point3(50, 4,30), white);
+    //worldSetup.add(make_shared<constant_medium>(boxFog, 0.04, color(1,1,1)));
 
     hittable_list world;
     world.add(make_shared<bvh_node>(worldSetup, 0, 1));
 
-    //color background(0,0,0);
+    solid_background bGround(0,0,0);
     //color background(.7,.8,1);
-    environment_map bGround("assets/Skybox-night");
+    //environment_map bGround("assets/Skybox-night");
     //solid_background bGround(color(.7,.8,1));
 
     /*CAMERA----------------------------------------------------------------------------------------------------------*/
 
     vec3 rotation(0,1,0);
     //point3 lookFrom(13,2,3);
-    point3 lookFrom(5,16,18);
     //point3 lookFrom(1.2,-.7,0);
-    point3 lookAt(0,9,0);
     //point3 lookAt(0,0,0);
+    point3 lookFrom = point3(278, 278, -800);
+    point3 lookAt = point3(278, 278, 0);
     double focalDistance = 10.0;//(lookFrom - lookAt).length();
-    double aperture = 0.1;
-    camera cam(rotation, lookFrom, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
+    double aperture = 0.0;
+
+
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 40.0, focalDistance, aperture, 0,0);
     movingCamera movCam(rotation, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     frameMaker camLocationGenerator(lookFrom, lookAt);
     camLocationGenerator.generateYSpin(&movCam, duration, fps);

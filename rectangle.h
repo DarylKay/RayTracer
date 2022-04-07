@@ -44,7 +44,7 @@ public:
         rec.v = (y - y0) / (y1 - y0);
 
         vec3 outwardNormal(0,0,1);
-        rec.setFrontFace(r, outwardNormal);
+        rec.setFaceNormal(r, outwardNormal);
         rec.material = material;
 
         return true;
@@ -88,7 +88,7 @@ public:
         rec.v = (z - z0) / (z1 - z0);
 
         vec3 outwardNormal(1,0,0);
-        rec.setFrontFace(r, outwardNormal);
+        rec.setFaceNormal(r, outwardNormal);
         rec.material = material;
 
         return true;
@@ -132,7 +132,7 @@ public:
         rec.v = (z - z0) / (z1 - z0);
 
         vec3 outwardNormal(0,1,0);
-        rec.setFrontFace(r, outwardNormal);
+        rec.setFaceNormal(r, outwardNormal);
         rec.material = material;
 
         return true;

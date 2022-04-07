@@ -13,6 +13,7 @@ class solid_background : public background {
 public:
     solid_background(){}
     solid_background(const color &solidColor) : backColor(solidColor){};
+    solid_background(double a, double b, double c) : backColor(color(a,b,c)){};
 
     virtual color backgroundColor(const ray& r) const override {
         return backColor;

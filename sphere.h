@@ -49,7 +49,7 @@ bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) cons
     rec.t = root;
     rec.p = r.at(root);
     vec3 outwardNormal = unitVector(rec.p - center); //unit vector
-    rec.setFrontFace(r, outwardNormal);
+    rec.setFaceNormal(r, outwardNormal);
     getSphereUV(rec.u, rec.v, outwardNormal);
     rec.material = material;
 

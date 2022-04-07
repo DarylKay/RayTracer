@@ -103,7 +103,7 @@ bool triangle::hit(const ray& r, double t_min, double t_max, hit_record& rec) co
     } else {
         outwardNormal = unitVector(normals[0] * baryA + normals[1] * baryB + normals[2] * baryC); //interpolated normals with barrycentric coordinates
     }
-    rec.setFrontFace(r, outwardNormal);
+    rec.setFaceNormal(r, outwardNormal);
     getTriangleUV(rec.u, rec.v, baryA, baryB, baryC);
     rec.material = material;
 
