@@ -63,44 +63,44 @@ bool translate::boundBox(double t_min, double t_max, aabb &box) const {
     return true;
 }
 
-class rotateY : public hittable {
+class rotate_y : public hittable {
 public:
-    rotateY(shared_ptr<hittable> obj, double angle);
+    rotate_y(shared_ptr<hittable> p, double angle);
 
-    virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
-    virtual bool boundBox(double t_min, double t_max, aabb& box) const override {
-        box = bBox;
-        return hasBox;
+    virtual bool hit(
+            const ray& r, double t_min, double t_max, hit_record& rec) const override;
+
+    virtual bool boundBox(double time0, double time1, aabb& output_box) const override {
+        output_box = bbox;
+        return hasbox;
     }
 
-    shared_ptr<hittable> object;
-    double sinTheta;
-    double cosTheta;
-    bool hasBox;
-    aabb bBox;
+public:
+    shared_ptr<hittable> ptr;
+    double sin_theta;
+    double cos_theta;
+    bool hasbox;
+    aabb bbox;
 };
 
-rotateY::rotateY(shared_ptr<hittable> obj, double angle) : object(obj) {
-    double radians = degToRad(angle);
+rotate_y::rotate_y(shared_ptr<hittable> p, double angle) : ptr(p) {
+    auto radians = degToRad(angle);
+    sin_theta = sin(radians);
+    cos_theta = cos(radians);
+    hasbox = ptr->boundBox(0, 1, bbox);
 
-    sinTheta = sin(radians);
-    cosTheta = cos(radians);
-
-    hasBox = object->boundBox(0,1,bBox);
-
-    point3 min(infinity, infinity, infinity);
+    point3 min( infinity,  infinity,  infinity);
     point3 max(-infinity, -infinity, -infinity);
 
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             for (int k = 0; k < 2; k++) {
-                auto x = i*bBox.maximum().x() + (1-i)*bBox.minimum().x();
-                auto y = j*bBox.maximum().y() + (1-j)*bBox.minimum().y();
-                auto z = k*bBox.maximum().z() + (1-k)*bBox.minimum().z();
+                auto x = i*bbox.maximum().x() + (1-i)*bbox.minimum().x();
+                auto y = j*bbox.maximum().y() + (1-j)*bbox.minimum().y();
+                auto z = k*bbox.maximum().z() + (1-k)*bbox.minimum().z();
 
-                auto newx =  cosTheta*x + sinTheta*z;
-                auto newz = -sinTheta*x + cosTheta*z;
-
+                auto newx =  cos_theta*x + sin_theta*z;
+                auto newz = -sin_theta*x + cos_theta*z;
 
                 vec3 tester(newx, y, newz);
 
@@ -112,36 +112,35 @@ rotateY::rotateY(shared_ptr<hittable> obj, double angle) : object(obj) {
         }
     }
 
-    bBox = aabb(min, max);
+    bbox = aabb(min, max);
 }
 
-bool rotateY::hit(const ray &r, double t_min, double t_max, hit_record &rec) const {
-    point3 origin = r.origin();
-    point3 direction = r.direction();
+bool rotate_y::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {
+    auto origin = r.origin();
+    auto direction = r.direction();
 
-    origin[0] = cosTheta*r.origin()[0] - sinTheta*r.origin()[2];
-    origin[2] = sinTheta*r.origin()[0] + cosTheta*r.origin()[2];
+    origin[0] = cos_theta*r.origin()[0] - sin_theta*r.origin()[2];
+    origin[2] = sin_theta*r.origin()[0] + cos_theta*r.origin()[2];
 
-    direction[0] = cosTheta*r.origin()[0] - sinTheta*r.origin()[2];
-    direction[2] = sinTheta*r.origin()[0] + cosTheta*r.origin()[2];
+    direction[0] = cos_theta*r.direction()[0] - sin_theta*r.direction()[2];
+    direction[2] = sin_theta*r.direction()[0] + cos_theta*r.direction()[2];
 
-    ray rotatedR(origin, direction, r.time());
+    ray rotated_r(origin, direction, r.time());
 
-    if(!object->hit(rotatedR, t_min, t_max, rec)){
+    if (!ptr->hit(rotated_r, t_min, t_max, rec))
         return false;
-    }
 
-    point3 p = rec.p;
-    vec3 normal = rec.normal;
+    auto p = rec.p;
+    auto normal = rec.normal;
 
-    p[0] =  cosTheta*rec.p[0] + sinTheta*rec.p[2];
-    p[2] = -sinTheta*rec.p[0] + cosTheta*rec.p[2];
+    p[0] =  cos_theta*rec.p[0] + sin_theta*rec.p[2];
+    p[2] = -sin_theta*rec.p[0] + cos_theta*rec.p[2];
 
-    normal[0] =  cosTheta*rec.normal[0] + sinTheta*rec.normal[2];
-    normal[2] = -sinTheta*rec.normal[0] + cosTheta*rec.normal[2];
+    normal[0] =  cos_theta*rec.normal[0] + sin_theta*rec.normal[2];
+    normal[2] = -sin_theta*rec.normal[0] + cos_theta*rec.normal[2];
 
     rec.p = p;
-    rec.setFaceNormal(rotatedR, normal);
+    rec.setFaceNormal(rotated_r, normal);
 
     return true;
 }

@@ -19,6 +19,10 @@
 #include "background.h"
 #include "constant_medium.h"
 #include <thread>
+#include "SuperSpectrum.h"
+#include "RGBSpectrum.h"
+#include "SampledSpectrum.h"
+
 
 using namespace std;
 
@@ -208,12 +212,12 @@ int main() {
 
     hittable_list worldSetup = cornell_box();
     shared_ptr<hittable> box1 = make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
-    box1 = make_shared<rotateY>(box1, 15);
+    box1 = make_shared<rotate_y>(box1, 15);
     box1 = make_shared<translate>(box1, vec3(265,0,295));
     worldSetup.add(box1);
 
     shared_ptr<hittable> box2 = make_shared<box>(point3(0,0,0), point3(165,165,165), white);
-    box2 = make_shared<rotateY>(box2, -18);
+    box2 = make_shared<rotate_y>(box2, -18);
     box2 = make_shared<translate>(box2, vec3(130,0,65));
     worldSetup.add(box2);
     //hittable_list worldSetup = setupScene("assets/dinosmooth1.obj");

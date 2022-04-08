@@ -16,6 +16,7 @@ using namespace std;
 using std::shared_ptr;
 using std::make_shared;
 
+
 const double infinity = numeric_limits<double>::infinity();
 const double pi = 3.1415926535897932385;
 const double epsilon = 0.000001;
@@ -107,7 +108,7 @@ string getTimeString(time_t start, double estimatedTime, double currentLine, dou
 vector<point3> generateSamples(int dimension, int samples) {
     vector<point3> genSamples;
 
-    int prime[] = {2,3,5,7,11,13,17,19,23,29,31};
+    int prime[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31};
 
     double p[samples];
     double h[samples * dimension];
@@ -118,13 +119,13 @@ vector<point3> generateSamples(int dimension, int samples) {
         int b = prime[i];
         int n = static_cast<int>(ceil(lognsamples / log(b)));
         for (int t = 0; t < n; t++) {
-            p[t] = pow(b, -(t+1));
+            p[t] = pow(b, -(t + 1));
         }
 
         for (int j = 0; j < samples; j++) {
             int d = j + 1;
             double sum = fmod(d, b) * p[0];
-            for(int t = 1; t < n; t++) {
+            for (int t = 1; t < n; t++) {
                 d = floor(d / b);
                 sum += fmod(d, b) * p[t];
             }
@@ -135,7 +136,7 @@ vector<point3> generateSamples(int dimension, int samples) {
 
     //works for 2D
     for (int i = 0; i < samples * dimension; i += dimension) {
-        genSamples.push_back(point3(h[i], h[i+1], 0));
+        genSamples.push_back(point3(h[i], h[i + 1], 0));
     }
 
     return genSamples;

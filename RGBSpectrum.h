@@ -1,0 +1,5 @@
+#ifndef RGBSPECTRUM_H
+#define RGBSPECTRUM_H
+
+
+#endif //RGBSPECTRUM_H
