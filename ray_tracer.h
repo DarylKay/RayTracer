@@ -43,6 +43,10 @@ inline double clamp(double x, double min, double max) {
     return x;
 }
 
+inline float Lerp(float t, float v1, float v2) {
+    return (1 - t) * v1 + t * v2;
+}
+
 string getTimeString(time_t start, double estimatedTime, double currentLine, double height) {
     time_t currentTime = time(NULL);
 
