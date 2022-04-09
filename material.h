@@ -78,7 +78,7 @@ public:
 
 class dielectric : public material {
 public :
-    dielectric (const double ind) : indice(ind) {}
+    dielectric (const double ind, const double d) : indice(ind), dispersion(d) {}
 
     virtual bool scatter(
             const ray& r_in, const struct hit_record& rec, color& attenuation, ray& scattered
@@ -104,6 +104,7 @@ public :
     }
 
     double indice;
+    double dispersion;
 
     static double reflectance(double cosine, double ref_idx) {
         // Use Schlick's approximation for reflectance.

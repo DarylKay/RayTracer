@@ -1,10 +1,13 @@
 #ifndef SUPERSPECTRUM_H
 #define SUPERSPECTRUM_H
 
+
 static const int sampledLambdaStart = 400;
 static const int sampledLambaEnd = 700;
 static const int nSpectralSamples = 60;
-
+static const int nCIESamples = 471;
+static const float CIE_Y_Integral = 106.856895;
+#include "CIE_Values.h"
 
 template<int nSpectrumSamples> class SuperSpectrum {
 public:
@@ -96,15 +99,8 @@ public:
         return c[i];
     }
 
-    float c[nSpectrumSamples];
     static const int nSamples = nSpectrumSamples;
+    float c[nSpectrumSamples];
 };
-
-void SortSpectrumSamples(float *lambda, float *vals, int n) {
-    vector<pair<float, float>> sortVec;
-    sortVec.reserve;
-
-}
-
 
 #endif //SUPERSPECTRUM_H

@@ -53,6 +53,10 @@ class vec3 {
             const double s = 1e-8;
             return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
         }
+
+        double sum() const {
+            return e[0] + e[1] + e[2];
+        }
 };
 
 inline ostream& operator<<(ostream &os, vec3 &v) {
@@ -135,7 +139,7 @@ inline vec3 maxVals(const vec3 &a, const vec3 &b) {
     return vec3(max(a.x(),b.x()), max(a.y(),b.y()), max(a.z(),b.z()));
 }
 
-vec3 random_in_unit_disk() {
+inline vec3 random_in_unit_disk() {
     while (true) {
         auto p = vec3(randomDouble(-1,1), randomDouble(-1,1), 0);
         if (p.lengthSquared() >= 1) continue;
@@ -145,5 +149,7 @@ vec3 random_in_unit_disk() {
 
 using point3 = vec3; //3D point
 using color = vec3; //RGB Color
+using RGB = vec3; //RGB Spectral color
+using XYZ = vec3; //XYZ Spectral color
 
 #endif

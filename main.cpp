@@ -90,13 +90,13 @@ hittable_list random_scene() {
                     world.add(make_shared<sphere>(center, 0.2, sphere_material));
                 } else {
                     // glass
-                    sphere_material = make_shared<dielectric>(1.5);
+                    sphere_material = make_shared<dielectric>(1.5, 0);
                     world.add(make_shared<sphere>(center, 0.2, sphere_material));
                 }
             }
         }
     }
-    auto material1 = make_shared<dielectric>(1.5);
+    auto material1 = make_shared<dielectric>(1.5, 0);
     world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
     auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
     world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
@@ -164,10 +164,14 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 }
 
 int main() {
+    SampledSpectrum::Init();
+    SampledSpectrum temp = SampledSpectrum(0);
+
+
     string imageName = "CornellBoxFirst";
     int numSamples = 50;
 
-    int processor_count = thread::hardware_concurrency();
+    int processor_count = 1;//thread::hardware_concurrency();
     int threadRowSize = 10;
 
     bool animation = false;
@@ -237,7 +241,7 @@ int main() {
     auto checker = make_shared<checker_texture>(color(0.1, 0.1, 0.1), color(0.9, 0.9, 0.9));
     auto material_ground = make_shared<lambertian>(color(0.042, 0.398, 0.134));
     auto material_center   = make_shared<lambertian>(color(0.1,0.2,0.5));
-    auto material_left  = make_shared<dielectric>(1.5);
+    auto material_left  = make_shared<dielectric>(1.5, 0);
     auto material_right  = make_shared<metal>(color(0.7,0.7,0.7), 0.0);
 
     //worldSetup.add(make_shared<sphere>(point3( 0.0, -1000.5, -1.0), 1000, material_ground));
@@ -337,7 +341,7 @@ int main() {
         for (int j = imageHeight - 1; j >= 0; j -= (4 * threadRowSize)) {
             cerr << "\rFrame: " << camNum + 1 << "/" << frames << " | Scanlines remaining: " << j << " | " << getTimeString(start, estimatedTime, j, imageHeight)
                  << ' ' << std::flush;
-
+/*
             vector<color> colorVector1;
             vector<color> colorVector2;
             vector<color> colorVector3;
@@ -359,9 +363,9 @@ int main() {
 
             t4.join();
             writeColor(image, colorVector4, numSamples);
+*/
 
-
-            /*for (int i = 0; i < imageWidth; ++i) {
+            for (int i = 0; i < imageWidth; ++i) {
                 color pixelColor(0, 0, 0);
                 for (int s = 0; s < numSamples / 4; ++s) {
                     double u = (i + points[s].x()) / (imageWidth - 1);
@@ -370,7 +374,7 @@ int main() {
                     pixelColor += rayColor(r, world, bGround, recursiveDepth);
                 }
                 writeColor(image, pixelColor, numSamples);
-            }*/
+            }
         }
         image.close();
     }
