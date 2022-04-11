@@ -3,6 +3,10 @@
 
 #include "ray_tracer.h"
 
+#include "SuperSpectrum.h"
+#include "RGBSpectrum.h"
+#include "SampledSpectrum.h"
+
 #include "camera.h"
 #include "Animator/movingCamera.h"
 #include "Animator/frameMaker.h"
@@ -19,9 +23,6 @@
 #include "background.h"
 #include "constant_medium.h"
 #include <thread>
-#include "SuperSpectrum.h"
-#include "RGBSpectrum.h"
-#include "SampledSpectrum.h"
 
 
 using namespace std;
@@ -64,12 +65,18 @@ Goals for the end of the semester:
 -Disney BSDF?
 */
 
+/*
+ * RGB color to color spectrum, sample over the red blue and green wave length at every single pixel.
+ * Those colors and added values are added to a color spectrum. That spectrum is then converted to rgb later
+ * Wavelength are refracted based on the wavelength as well
+ *
+ */
 
 time_t start;
 
 hittable_list random_scene() {
     hittable_list world;
-    auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
+    auto ground_material = make_shared<lambertian>(RGB(0.5, 0.5, 0.5));
     //world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
@@ -79,7 +86,7 @@ hittable_list random_scene() {
                 shared_ptr<material> sphere_material;
                 if (choose_mat < 0.8) {
                     // diffuse
-                    auto albedo = color(randomDouble(),randomDouble(),randomDouble()) * color(randomDouble(),randomDouble(),randomDouble());
+                    auto albedo = RGB(randomDouble(),randomDouble(),randomDouble()) * RGB(randomDouble(),randomDouble(),randomDouble());
                     sphere_material = make_shared<lambertian>(albedo);
                     world.add(make_shared<sphere>(center, 0.2, sphere_material));
                 } else if (choose_mat < 0.95) {
@@ -98,9 +105,9 @@ hittable_list random_scene() {
     }
     auto material1 = make_shared<dielectric>(1.5, 0);
     world.add(make_shared<sphere>(point3(0, 1, 0), 1.0, material1));
-    auto material2 = make_shared<lambertian>(color(0.4, 0.2, 0.1));
+    auto material2 = make_shared<lambertian>(RGB(0.4, 0.2, 0.1));
     world.add(make_shared<sphere>(point3(-4, 1, 0), 1.0, material2));
-    auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
+    auto material3 = make_shared<metal>(RGB(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
     return world;
 }
@@ -108,10 +115,10 @@ hittable_list random_scene() {
 hittable_list cornell_box() {
     hittable_list objects;
 
-    auto red   = make_shared<lambertian>(color(.65, .05, .05));
-    auto white = make_shared<lambertian>(color(.73, .73, .73));
-    auto green = make_shared<lambertian>(color(.12, .45, .15));
-    auto light = make_shared<emissive>(color(15, 15, 15));
+    auto red   = make_shared<lambertian>(RGB(.65, .05, .05));
+    auto white = make_shared<lambertian>(RGB(.73, .73, .73));
+    auto green = make_shared<lambertian>(RGB(.12, .45, .15));
+    auto light = make_shared<emissive>(RGB(15, 15, 15));
 
     objects.add(make_shared<yzRect>(0, 555, 0, 555, 555, green));
     objects.add(make_shared<yzRect>(0, 555, 0, 555, 0, red));
@@ -123,10 +130,10 @@ hittable_list cornell_box() {
     return objects;
 }
 
-color rayColor(const ray& r, const hittable& world, const background& bGround, const int depth) {
+SampledSpectrum rayColor(const ray& r, const hittable& world, const background& bGround, const int depth) {
     hit_record rec;
     if (depth <=0){
-        return color(0,0,0);
+        return {0};
     }
 
     if(!world.hit(r, epsilon, infinity, rec)) {
@@ -134,8 +141,8 @@ color rayColor(const ray& r, const hittable& world, const background& bGround, c
     }
 
     ray scattered;
-    color attenuation;
-    color emitted = rec.material->emitted();
+    SampledSpectrum attenuation;
+    SampledSpectrum emitted = rec.material->emitted();
 
     if (!rec.material->scatter(r, rec, attenuation, scattered)){
         return emitted;
@@ -144,12 +151,12 @@ color rayColor(const ray& r, const hittable& world, const background& bGround, c
     return emitted + attenuation * (rayColor(scattered, world, bGround, depth - 1));
 }
 
-void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<point3> points, camera& usingCam, hittable_list& world, background& bGround, int numSamples, int recursiveDepth, vector<color> &returnColor) {
-    vector<color> retVals;
+void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<point3> points, camera& usingCam, hittable_list& world, background& bGround, int numSamples, int recursiveDepth, vector<SampledSpectrum> &returnColor) {
+    vector<SampledSpectrum> retVals;
 
     for (int row = 0; row < numRows; ++row) {
         for (int i = 0; i < imageWidth; ++i) {
-            color pixelColor(0, 0, 0);
+            SampledSpectrum pixelColor(0);
             for (int s = 0; s < numSamples; ++s) {
                 double u = (i + points[s].x()) / (imageWidth - 1);
                 double v = ((j - row) + points[s].y()) / (imageHeight - 1);
@@ -165,8 +172,6 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 
 int main() {
     SampledSpectrum::Init();
-    SampledSpectrum temp = SampledSpectrum(0);
-
 
     string imageName = "CornellBoxFirst";
     int numSamples = 50;
@@ -207,11 +212,11 @@ int main() {
 
     /*SETUP-WORLD-----------------------------------------------------------------------------------------------------*/
 
-    auto material_light = make_shared<emissive>(color(15,15,15));
-    auto material_light2 = make_shared<emissive>(color(20,20,20));
+    auto material_light = make_shared<emissive>(RGB(15,15,15));
+    auto material_light2 = make_shared<emissive>(RGB(20,20,20));
 
 
-    auto white = make_shared<lambertian>(color(.73,.73,.73));
+    auto white = make_shared<lambertian>(RGB(.73,.73,.73));
 
 
     hittable_list worldSetup = cornell_box();
@@ -228,7 +233,7 @@ int main() {
 
     //worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
     //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
-
+/*
     auto earth_texture = make_shared<image_texture>("assets/earth.jpg");
     auto earth_surface = make_shared<lambertian>(earth_texture);
 
@@ -237,12 +242,12 @@ int main() {
     auto ballcue = make_shared<lambertian>(make_shared<image_texture>("assets/BallCue.jpg"));
 
     auto grass = make_shared<lambertian>(make_shared<image_texture>("assets/grass.jpg"));
-
-    auto checker = make_shared<checker_texture>(color(0.1, 0.1, 0.1), color(0.9, 0.9, 0.9));
-    auto material_ground = make_shared<lambertian>(color(0.042, 0.398, 0.134));
-    auto material_center   = make_shared<lambertian>(color(0.1,0.2,0.5));
+*/
+    //auto checker = make_shared<checker_texture>(color(0.1, 0.1, 0.1), color(0.9, 0.9, 0.9));
+    auto material_ground = make_shared<lambertian>(RGB(0.042, 0.398, 0.134));
+    auto material_center   = make_shared<lambertian>(RGB(0.1,0.2,0.5));
     auto material_left  = make_shared<dielectric>(1.5, 0);
-    auto material_right  = make_shared<metal>(color(0.7,0.7,0.7), 0.0);
+    auto material_right  = make_shared<metal>(RGB(0.7,0.7,0.7), 0.0);
 
     //worldSetup.add(make_shared<sphere>(point3( 0.0, -1000.5, -1.0), 1000, material_ground));
     //worldSetup.add(make_shared<xzRect>(-10,10,-10,10,-.5, grass));
@@ -305,7 +310,7 @@ int main() {
     for (int j = imageHeight-1; j >= 0; --j) {
         cerr << "\rEstimating time... Scanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < imageWidth; ++i) {
-            color pixelColor(0, 0, 0);
+            SampledSpectrum pixelColor(0);
             double u = (i + randomDouble()) / (imageWidth-1);
             double v = (j + randomDouble()) / (imageHeight-1);
             ray r = usingCam.getRay(u, v);
@@ -341,11 +346,11 @@ int main() {
         for (int j = imageHeight - 1; j >= 0; j -= (4 * threadRowSize)) {
             cerr << "\rFrame: " << camNum + 1 << "/" << frames << " | Scanlines remaining: " << j << " | " << getTimeString(start, estimatedTime, j, imageHeight)
                  << ' ' << std::flush;
-/*
-            vector<color> colorVector1;
-            vector<color> colorVector2;
-            vector<color> colorVector3;
-            vector<color> colorVector4;
+
+            vector<SampledSpectrum> colorVector1;
+            vector<SampledSpectrum> colorVector2;
+            vector<SampledSpectrum> colorVector3;
+            vector<SampledSpectrum> colorVector4;
 
             thread t1 (calculateRow, threadRowSize, j - (0 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector1));
             thread t2 (calculateRow, threadRowSize, j - (1 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector2));
@@ -363,10 +368,10 @@ int main() {
 
             t4.join();
             writeColor(image, colorVector4, numSamples);
-*/
 
+/*
             for (int i = 0; i < imageWidth; ++i) {
-                color pixelColor(0, 0, 0);
+                SampledSpectrum pixelColor(0);
                 for (int s = 0; s < numSamples / 4; ++s) {
                     double u = (i + points[s].x()) / (imageWidth - 1);
                     double v = (j + points[s].y()) / (imageHeight - 1);
@@ -374,7 +379,7 @@ int main() {
                     pixelColor += rayColor(r, world, bGround, recursiveDepth);
                 }
                 writeColor(image, pixelColor, numSamples);
-            }
+            }*/
         }
         image.close();
     }

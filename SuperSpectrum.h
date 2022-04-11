@@ -6,6 +6,7 @@ static const int sampledLambdaStart = 400;
 static const int sampledLambaEnd = 700;
 static const int nSpectralSamples = 60;
 static const int nCIESamples = 471;
+static const int nRGB2SpectSamples = 32;
 static const float CIE_Y_Integral = 106.856895;
 #include "CIE_Values.h"
 
@@ -17,7 +18,7 @@ public:
         }
     }
 
-    SuperSpectrum &operator+=(const SuperSpectrum &s2) const{
+    SuperSpectrum &operator+=(const SuperSpectrum &s2){
         for (int i = 0; i < nSpectrumSamples; i++) {
             c[i] += s2.c[i];
         }
@@ -48,14 +49,14 @@ public:
         return out;
     }
 
-    SuperSpectrum &operator*=(const SuperSpectrum &s2) const{
+    SuperSpectrum &operator*=(const SuperSpectrum &s2){
         for(int i = 0; i < nSpectrumSamples; i++) {
             c[i] *= s2.c[i];
         }
         return *this;
     }
 
-    SuperSpectrum &operator*=(float a) const{
+    SuperSpectrum &operator*=(float a){
         for (int i = 0; i < nSpectrumSamples; i++) {
             c[i] *= a;
         }
@@ -100,6 +101,8 @@ public:
     }
 
     static const int nSamples = nSpectrumSamples;
+
+protected:
     float c[nSpectrumSamples];
 };
 

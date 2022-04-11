@@ -10,7 +10,7 @@
 class constant_medium : public hittable {
 public:
     constant_medium(shared_ptr<hittable> bounds, double density, shared_ptr<texture> text) : boundary(bounds), neg_inverted_density(-1/density), isotropicFunction(make_shared<isotropic>(text)){}
-    constant_medium(shared_ptr<hittable> bounds, double density, color c) : boundary(bounds), neg_inverted_density(-1/density), isotropicFunction(make_shared<isotropic>(c)){}
+    constant_medium(shared_ptr<hittable> bounds, double density, RGB c) : boundary(bounds), neg_inverted_density(-1/density), isotropicFunction(make_shared<isotropic>(c)){}
 
     virtual bool boundBox(double time0, double time1, aabb& outBox) const override {
         return boundary->boundBox(time0,time1,outBox);

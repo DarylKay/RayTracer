@@ -8,25 +8,64 @@
 
 class texture {
 public:
-    virtual color value(double u, double v, const point3& p) const = 0;
+    virtual SampledSpectrum value(double u, double v, const point3& p) const = 0;
 };
 
+/*
 class solid_color : public texture {
 public:
     solid_color() {}
-    solid_color(const color& c) : colorValue(c) {}
+    solid_color(const RGB& c) : colorValue(c) {}
     solid_color(double red, double green, double blue) {
-        colorValue = color(red, green, blue);
+        colorValue = RGB(red, green, blue);
     }
 
-    virtual color value(double u, double v, const point3& p) const override{
+    virtual RGB value(double u, double v, const point3& p) const override{
         return colorValue;
     }
 
 public:
-    color colorValue;
+    RGB colorValue;
+};
+ */
+
+class spectrum_color : public texture {
+public:
+    spectrum_color() {}
+    spectrum_color(const RGB& c) {
+        colorValue = SampledSpectrum::FromRGB(c);
+    }
+    spectrum_color(double red, double green, double blue) {
+        colorValue = SampledSpectrum::FromRGB(RGB(red, green, blue));
+    }
+
+    virtual SampledSpectrum value(double u, double v, const point3& p) const override{
+        return colorValue;
+    }
+
+public:
+    SampledSpectrum colorValue;
 };
 
+/*
+ * For Illuminance
+ * class spectrum_color : public texture {
+public:
+    spectrum_color() {}
+    spectrum_color(const RGB& c) {
+        colorValue = SampledSpectrum::FromRGB(c, SpectrumType::Reflectance);
+    }
+    spectrum_color(double red, double green, double blue) {
+        colorValue = SampledSpectrum::FromRGB(RGB(red, green, blue), SpectrumType::Reflectance);
+    }
+
+    virtual SampledSpectrum value(double u, double v, const point3& p) const override{
+        return colorValue;
+    }
+
+public:
+    SampledSpectrum colorValue;
+};
 class checker_texture : public texture {
 public:
     checker_texture() {}
@@ -106,5 +145,5 @@ private:
     int width, height;
     int bytes_per_scanline;
 };
-
+*/
 #endif //TEXTURE_H

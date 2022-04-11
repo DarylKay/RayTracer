@@ -2,11 +2,11 @@
 #define SETUPSCENE_H
 
 hittable_list setupScene(string file) {
-    auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<lambertian>(color(0.1, 0.8, 0.2));
+    auto material_ground = make_shared<lambertian>(RGB(0.8, 0.8, 0.0));
+    auto material_center = make_shared<lambertian>(RGB(0.1, 0.8, 0.2));
     auto material_left   = make_shared<dielectric>(1.5,0);
-    auto material_right  = make_shared<metal>(color(0.8, 0.6, 0.2), 0.0);
-    auto mirror  = make_shared<metal>(color(0.7,0.7,0.7), 0.0);
+    auto material_right  = make_shared<metal>(RGB(0.8, 0.6, 0.2), 0.0);
+    auto mirror  = make_shared<metal>(RGB(0.7,0.7,0.7), 0.0);
 
     //read .OBJ file
     ifstream infile;

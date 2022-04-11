@@ -148,7 +148,6 @@ inline vec3 random_in_unit_disk() {
 }
 
 using point3 = vec3; //3D point
-using color = vec3; //RGB Color
 using RGB = vec3; //RGB Spectral color
 using XYZ = vec3; //XYZ Spectral color
 

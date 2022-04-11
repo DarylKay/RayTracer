@@ -6,22 +6,23 @@
 
 class background {
 public:
-    virtual color backgroundColor(const ray& r) const = 0;
+    virtual SampledSpectrum backgroundColor(const ray& r) const = 0;
 };
 
 class solid_background : public background {
 public:
     solid_background(){}
-    solid_background(const color &solidColor) : backColor(solidColor){};
-    solid_background(double a, double b, double c) : backColor(color(a,b,c)){};
+    solid_background(const RGB &solidColor) : backColor(SampledSpectrum::FromRGB(solidColor)){};
+    solid_background(double a, double b, double c) : backColor(SampledSpectrum::FromRGB(RGB(a,b,c))){};
 
-    virtual color backgroundColor(const ray& r) const override {
+    virtual SampledSpectrum backgroundColor(const ray& r) const override {
         return backColor;
     }
 
-    color backColor;
+    SampledSpectrum backColor;
 };
 
+/*
 class environment_map : public background{
 public:
     const int bytes_per_pixel = 3;
@@ -119,5 +120,6 @@ public:
     int width, height;
     int bytes_per_scanline;
 };
+*/
 
 #endif //BACKGROUND_H

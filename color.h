@@ -6,12 +6,15 @@
 
 using namespace std;
 
-void writeColor(ostream &os, color pixelColor, int samples) {
-    double r = pixelColor[0];
-    double g = pixelColor[1];
-    double b = pixelColor[2];
+void writeColor(ostream &os, SampledSpectrum pixelColor, int samples) {
+    RGB rgb;
+    pixelColor.ToRGB(rgb);
 
-    double convert = 1.0 / (double)samples;
+    float convert = 1.0 / (float)samples;
+
+    float r = rgb[0];
+    float g = rgb[1];
+    float b = rgb[2];
 
     //color raised to 1/gamma, gamma=2.0
     r = sqrt(r * convert);
@@ -23,7 +26,7 @@ void writeColor(ostream &os, color pixelColor, int samples) {
        << (int)(255.999 * clamp(b,0.0,1.0)) << '\n';
 }
 
-void writeColor(ostream &os, vector<vec3> pixelRow, int samples) {
+void writeColor(ostream &os, vector<SampledSpectrum> pixelRow, int samples) {
         for (int i = 0; i < pixelRow.size(); i++) {
             writeColor(os, pixelRow[i], samples);
         }
