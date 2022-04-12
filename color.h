@@ -12,14 +12,17 @@ void writeColor(ostream &os, SampledSpectrum pixelColor, int samples) {
 
     float convert = 1.0 / (float)samples;
 
-    float r = rgb[0];
-    float g = rgb[1];
-    float b = rgb[2];
+    float luminance = pixelColor.luminance();
+
+    float r = static_cast<float>(rgb[0]);
+    float g = static_cast<float>(rgb[1]);
+    float b = static_cast<float>(rgb[2]);
 
     //color raised to 1/gamma, gamma=2.0
     r = sqrt(r * convert);
     g = sqrt(g * convert);
     b = sqrt(b * convert);
+
 
     os << (int)(255.999 * clamp(r,0.0,1.0)) << ' '
        << (int)(255.999 * clamp(g,0.0,1.0)) << ' '

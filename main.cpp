@@ -130,25 +130,25 @@ hittable_list cornell_box() {
     return objects;
 }
 
-SampledSpectrum rayColor(const ray& r, const hittable& world, const background& bGround, const int depth) {
+float rayColor(const ray& r, const hittable& world, const background& bGround, const int depth, const float lambda) {
     hit_record rec;
     if (depth <=0){
-        return {0};
+        return 0;
     }
 
     if(!world.hit(r, epsilon, infinity, rec)) {
-        return bGround.backgroundColor(r);
+        return bGround.backgroundColor(r, lambda);
     }
 
     ray scattered;
-    SampledSpectrum attenuation;
-    SampledSpectrum emitted = rec.material->emitted();
+    float attenuation;
+    float emitted = rec.material->emitted(lambda);
 
-    if (!rec.material->scatter(r, rec, attenuation, scattered)){
+    if (!rec.material->scatter(r, rec, attenuation, scattered, lambda)){
         return emitted;
     }
 
-    return emitted + attenuation * (rayColor(scattered, world, bGround, depth - 1));
+    return emitted + attenuation * (rayColor(scattered, world, bGround, depth - 1, lambda));
 }
 
 void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<point3> points, camera& usingCam, hittable_list& world, background& bGround, int numSamples, int recursiveDepth, vector<SampledSpectrum> &returnColor) {
@@ -156,14 +156,22 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 
     for (int row = 0; row < numRows; ++row) {
         for (int i = 0; i < imageWidth; ++i) {
-            SampledSpectrum pixelColor(0);
+            vector<pair<float,float>> samplingSpectrum;
             for (int s = 0; s < numSamples; ++s) {
                 double u = (i + points[s].x()) / (imageWidth - 1);
                 double v = ((j - row) + points[s].y()) / (imageHeight - 1);
                 ray r = usingCam.getRay(u, v);
-                pixelColor += rayColor(r, world, bGround, recursiveDepth);
+                float R = randomDouble(sampledLambdaStart, sampledLambaEnd);
+                float Rreturn = rayColor(r, world, bGround, recursiveDepth, R);
+                samplingSpectrum.push_back(make_pair(R,rayColor(r, world, bGround, recursiveDepth, R)));
+                float G = randomDouble(sampledLambdaStart, sampledLambaEnd);
+                samplingSpectrum.push_back(make_pair(G,rayColor(r, world, bGround, recursiveDepth, G)));
+                float B = randomDouble(sampledLambdaStart, sampledLambaEnd);
+                samplingSpectrum.push_back(make_pair(B,rayColor(r, world, bGround, recursiveDepth, B)));
             }
-            retVals.emplace_back(pixelColor);
+
+            SampledSpectrum pixelSpectrum = SampledSpectrum::FromSampled(samplingSpectrum);
+            retVals.emplace_back(pixelSpectrum);
         }
     }
 
@@ -174,7 +182,7 @@ int main() {
     SampledSpectrum::Init();
 
     string imageName = "CornellBoxFirst";
-    int numSamples = 50;
+    int numSamples = 500;
 
     int processor_count = 1;//thread::hardware_concurrency();
     int threadRowSize = 10;
@@ -306,19 +314,28 @@ int main() {
     } else {
         usingCam = cam;
     }
-
+/*
     for (int j = imageHeight-1; j >= 0; --j) {
         cerr << "\rEstimating time... Scanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < imageWidth; ++i) {
-            SampledSpectrum pixelColor(0);
+            vector<pair<float,float>> samplingSpectrum;
             double u = (i + randomDouble()) / (imageWidth-1);
             double v = (j + randomDouble()) / (imageHeight-1);
+
             ray r = usingCam.getRay(u, v);
-            pixelColor += rayColor(r, world, bGround, recursiveDepth);
-            writeColor(imageRough, pixelColor, 1);
+            float R = randomDouble(sampledLambdaStart, sampledLambaEnd);
+            samplingSpectrum.emplace_back(R,rayColor(r, world, bGround, recursiveDepth, R));
+            float G = randomDouble(sampledLambdaStart, sampledLambaEnd);
+            samplingSpectrum.emplace_back(G,rayColor(r, world, bGround, recursiveDepth, G));
+            float B = randomDouble(sampledLambdaStart, sampledLambaEnd);
+            samplingSpectrum.emplace_back(B,rayColor(r, world, bGround, recursiveDepth, B));
+
+            SampledSpectrum pixelSpectrum = SampledSpectrum::FromSampled(samplingSpectrum);
+
+            writeColor(imageRough, pixelSpectrum, 1);
         }
     }
-
+*/
     time_t endEstimate = time(NULL);
     double estimatedTime = (difftime(endEstimate, startEstimate) * numSamples) / processor_count;
 

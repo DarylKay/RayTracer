@@ -9,11 +9,11 @@ struct hit_record;
 class material {
 public:
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, SuperSpectrum<nSpectralSamples>& attenuation, ray& scattered
+            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
     ) const = 0;
 
-    virtual SampledSpectrum emitted() const {
-        return SampledSpectrum::FromRGB(RGB(0,0,0));
+    virtual float emitted(float lambda) const {
+        return 0.0;
     }
 };
 
@@ -22,13 +22,13 @@ public:
     emissive(const RGB &a) : emit(SampledSpectrum::FromRGB(a,SpectrumType::Illuminant)) {}
 
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, SuperSpectrum<nSpectralSamples>& attenuation, ray& scattered
+            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
     ) const override {
         return false;
     }
 
-    virtual SampledSpectrum emitted() const override {
-        return emit;
+    virtual float emitted(float lambda) const override {
+        return InterpolateSpectrumSamples(emit, lambda);
     }
 
     SampledSpectrum emit;
@@ -39,11 +39,11 @@ public:
     metal(const RGB& a, double f) : metColor(SampledSpectrum::FromRGB(a)), fuzz(f < 1 ? f : 1) {}
 
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, SuperSpectrum<nSpectralSamples>& attenuation, ray& scattered
+            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
     ) const override {
         vec3 direction = reflect(unitVector(r_in.direction()), rec.normal);
         scattered = ray(rec.p, direction + fuzz * randomUnitSphere());
-        attenuation = metColor;
+        attenuation = InterpolateSpectrumSamples(metColor, lambda);
         return (dot(direction, rec.normal) > 0);
     }
 
@@ -57,7 +57,7 @@ public:
     lambertian(shared_ptr<texture> a ) : albedo(a){}
 
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, SuperSpectrum<nSpectralSamples>& attenuation, ray& scattered
+            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
     ) const override{
         vec3 direction = lambertianScatter(rec.normal);
 
@@ -67,7 +67,7 @@ public:
 
         scattered = ray(rec.p, direction);
 
-        attenuation = albedo->value(rec.u, rec.v, rec.p);
+        attenuation = albedo->value(rec.u, rec.v, rec.p, lambda);
         return true;
     }
 
@@ -80,7 +80,7 @@ public :
     dielectric (const double ind, const double d) : indice(ind), dispersion(d) {}
 
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, SuperSpectrum<nSpectralSamples>& attenuation, ray& scattered
+            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
     ) const override {
         double ratio = rec.front_face ? (1.0/indice) : indice;
 
@@ -97,7 +97,7 @@ public :
             direction = refract(unitDirection, rec.normal, ratio);
         }
 
-        attenuation = SampledSpectrum::FromRGB(RGB(1.0,1.0,1.0));
+        attenuation = 1.0;
         scattered = ray(rec.p, direction);
         return true;
     }
@@ -119,10 +119,10 @@ public:
     isotropic(shared_ptr<texture> text) : albedo(text) {}
 
     virtual bool scatter(
-        const ray& r_in, const struct hit_record& rec, SuperSpectrum<nSpectralSamples>& attenuation, ray& scattered
+        const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
     ) const override {
         scattered = ray(rec.p, randomUnitSphere(), r_in.time());
-        attenuation = albedo->value(rec.u, rec.v, rec.p);
+        attenuation = albedo->value(rec.u, rec.v, rec.p, lambda);
         return true;
     }
 

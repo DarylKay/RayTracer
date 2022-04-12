@@ -100,6 +100,10 @@ public:
         return c[i];
     }
 
+    float operator[](int i) const {
+        return c[i];
+    }
+
     static const int nSamples = nSpectrumSamples;
 
 protected:
