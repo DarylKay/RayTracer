@@ -82,7 +82,8 @@ public :
     virtual bool scatter(
             const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
     ) const override {
-        double ratio = rec.front_face ? (1.0/indice) : indice;
+        double cauchy = indice + (dispersion/(lambda * lambda));
+        double ratio = rec.front_face ? (1.0/cauchy) : cauchy;
 
         vec3 unitDirection = r_in.direction();
 

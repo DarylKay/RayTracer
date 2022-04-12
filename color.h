@@ -10,7 +10,7 @@ void writeColor(ostream &os, SampledSpectrum pixelColor, int samples) {
     RGB rgb;
     pixelColor.ToRGB(rgb);
 
-    float convert = 1.0 / (float)samples;
+    //float convert = 1.0 ; (float)samples;
 
     float luminance = pixelColor.luminance();
 
@@ -19,9 +19,9 @@ void writeColor(ostream &os, SampledSpectrum pixelColor, int samples) {
     float b = static_cast<float>(rgb[2]);
 
     //color raised to 1/gamma, gamma=2.0
-    r = sqrt(r * convert);
-    g = sqrt(g * convert);
-    b = sqrt(b * convert);
+    r = sqrt(r);
+    g = sqrt(g);
+    b = sqrt(b);
 
 
     os << (int)(255.999 * clamp(r,0.0,1.0)) << ' '

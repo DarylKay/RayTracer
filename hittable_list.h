@@ -15,6 +15,11 @@ public:
 
     void clear() {objects.clear(); }
     void add(shared_ptr<hittable> object) {objects.push_back(object); }
+    void add(hittable_list list) {
+        for (int i = 0; i < list.objects.size(); i++) {
+            objects.push_back(list.objects[i]);
+        }
+    }
 
     bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const override;
     bool boundBox(double time0, double time1, aabb& output_box) const override;

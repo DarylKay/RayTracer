@@ -181,8 +181,8 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 int main() {
     SampledSpectrum::Init();
 
-    string imageName = "CornellBoxFirst";
-    int numSamples = 500;
+    string imageName = "DiamondRender";
+    int numSamples = 1000;
 
     int processor_count = 1;//thread::hardware_concurrency();
     int threadRowSize = 10;
@@ -192,7 +192,7 @@ int main() {
     double fps = 1;
     int frames = static_cast<int>(duration * fps);
 
-    const int imageOption = 2; //higher = higher res
+    const int imageOption = 3; //higher = higher res
 
     int imageWidth;
     switch(imageOption) {
@@ -209,38 +209,35 @@ int main() {
             imageWidth = 852;//480p
             break;
         default:
-            imageWidth = 400;
+            imageWidth = 480;
             break;
     }
 
-    const double aspectRatio = 1.0;//16.0/9.0;
+    const double aspectRatio = 16.0/9.0;
     const int imageHeight = (int)(imageWidth / aspectRatio);
 
     int recursiveDepth = 50;
 
     /*SETUP-WORLD-----------------------------------------------------------------------------------------------------*/
 
-    auto material_light = make_shared<emissive>(RGB(15,15,15));
-    auto material_light2 = make_shared<emissive>(RGB(20,20,20));
-
+    auto material_light = make_shared<emissive>(RGB(12,12,12));
 
     auto white = make_shared<lambertian>(RGB(.73,.73,.73));
 
 
-    hittable_list worldSetup = cornell_box();
-    shared_ptr<hittable> box1 = make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
-    box1 = make_shared<rotate_y>(box1, 15);
-    box1 = make_shared<translate>(box1, vec3(265,0,295));
-    worldSetup.add(box1);
+    hittable_list worldSetup;
 
-    shared_ptr<hittable> box2 = make_shared<box>(point3(0,0,0), point3(165,165,165), white);
-    box2 = make_shared<rotate_y>(box2, -18);
-    box2 = make_shared<translate>(box2, vec3(130,0,65));
-    worldSetup.add(box2);
-    //hittable_list worldSetup = setupScene("assets/dinosmooth1.obj");
+    auto diamond = make_shared<dielectric>(2.4218, 0.021);
+    hittable_list diamondList = setupScene("assets/diamond.obj", diamond);
+    auto creme = make_shared<lambertian>(RGB(.99,.98,.81));
+    hittable_list backdropList = setupScene("assets/backdrop.obj", creme);
 
-    //worldSetup.add(make_shared<sphere>(point3(30,80,-25), 20, material_light));
-    //worldSetup.add(make_shared<sphere>(point3(-20,30,30), 8, material_light2));
+    worldSetup.add(diamondList);
+    worldSetup.add(backdropList);
+
+    worldSetup.add(make_shared<sphere>(point3(7,6,-1.8), .6, material_light));
+    //worldSetup.add(make_shared<sphere>(point3(8,5,0), .4, material_light));
+
 /*
     auto earth_texture = make_shared<image_texture>("assets/earth.jpg");
     auto earth_surface = make_shared<lambertian>(earth_texture);
@@ -253,16 +250,17 @@ int main() {
 */
     //auto checker = make_shared<checker_texture>(color(0.1, 0.1, 0.1), color(0.9, 0.9, 0.9));
     auto material_ground = make_shared<lambertian>(RGB(0.042, 0.398, 0.134));
-    auto material_center   = make_shared<lambertian>(RGB(0.1,0.2,0.5));
-    auto material_left  = make_shared<dielectric>(1.5, 0);
+    auto material_center   = make_shared<lambertian>(RGB(0.9,0.5,0.5));
+    auto material_left  = make_shared<dielectric>(1.522, 0.04059);
     auto material_right  = make_shared<metal>(RGB(0.7,0.7,0.7), 0.0);
 
     //worldSetup.add(make_shared<sphere>(point3( 0.0, -1000.5, -1.0), 1000, material_ground));
-    //worldSetup.add(make_shared<xzRect>(-10,10,-10,10,-.5, grass));
-    //worldSetup.add(make_shared<sphere>(point3( 0,    0.0, -1.0),   0.5, ball15));
-    //worldSetup.add(make_shared<sphere>(point3(0,    0.0, 0),   0.5, material_right));
-    //worldSetup.add(make_shared<sphere>(point3( 0,    0.0, 1.0),   0.5, ballcue));
-
+    /*
+    worldSetup.add(make_shared<xzRect>(-10,10,-10,10,-.5, material_ground));
+    worldSetup.add(make_shared<sphere>(point3( -1,    0.0, 1),   0.5, material_left));
+    worldSetup.add(make_shared<sphere>(point3(0,    0.0, 1),   0.5, material_center));
+    worldSetup.add(make_shared<sphere>(point3( 1,    0.0, 1),   0.5, material_right));
+*/
     //worldSetup.add(globe);
 
 
@@ -281,15 +279,15 @@ int main() {
 
     vec3 rotation(0,1,0);
     //point3 lookFrom(13,2,3);
-    //point3 lookFrom(1.2,-.7,0);
-    //point3 lookAt(0,0,0);
-    point3 lookFrom = point3(278, 278, -800);
-    point3 lookAt = point3(278, 278, 0);
+    point3 lookFrom(.8,2.4783,3.475);
+    point3 lookAt(0,0,0);
+    //point3 lookFrom = point3(278, 278, -800);
+    //point3 lookAt = point3(278, 278, 0);
     double focalDistance = 10.0;//(lookFrom - lookAt).length();
     double aperture = 0.0;
 
 
-    camera cam(rotation, lookFrom, lookAt, aspectRatio, 40.0, focalDistance, aperture, 0,0);
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 55.0, focalDistance, aperture, 0,0);
     movingCamera movCam(rotation, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     frameMaker camLocationGenerator(lookFrom, lookAt);
     camLocationGenerator.generateYSpin(&movCam, duration, fps);

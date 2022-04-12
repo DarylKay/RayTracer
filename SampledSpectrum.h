@@ -133,11 +133,11 @@ public:
         for (; i+1 < n && lambdaEnd >= lambdaValPairs[i].first; i++) {
             float segLambdaStart = max(lambdaStart, lambdaValPairs[i].first);
             float segLambdaEnd = min(lambdaEnd, lambdaValPairs[i + 1].first);
-            sum += 0.5 * (Lerp((segLambdaStart - lambdaValPairs[i].first) / (lambdaValPairs[i+1].first - lambdaValPairs[i].first),
-                               lambdaValPairs[i].second, lambdaValPairs[i+1].second)
-                        + Lerp((segLambdaEnd - lambdaValPairs[i].first) / (lambdaValPairs[i+1].first - lambdaValPairs[i].first),
-                               lambdaValPairs[i].second, lambdaValPairs[i+1].second))
-                    * (segLambdaEnd - segLambdaStart);
+            float first = Lerp((segLambdaStart - lambdaValPairs[i].first) / (lambdaValPairs[i+1].first - lambdaValPairs[i].first),
+                 lambdaValPairs[i].second, lambdaValPairs[i+1].second);
+            float second = Lerp((segLambdaEnd - lambdaValPairs[i].first) / (lambdaValPairs[i+1].first - lambdaValPairs[i].first),
+                                lambdaValPairs[i].second, lambdaValPairs[i+1].second);
+            sum += 0.5 * (first + second) * (segLambdaEnd - segLambdaStart);
         }
 
         if (isnan(sum)) {
