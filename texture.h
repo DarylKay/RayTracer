@@ -8,7 +8,7 @@
 
 class texture {
 public:
-    virtual float value(double u, double v, const point3& p, float lambda) const = 0;
+    virtual double value(double u, double v, const point3& p, double lambda) const = 0;
 };
 
 /*
@@ -39,7 +39,7 @@ public:
         colorValue = SampledSpectrum::FromRGB(RGB(red, green, blue));
     }
 
-    virtual float value(double u, double v, const point3& p, float lambda) const override{
+    virtual double value(double u, double v, const point3& p, double lambda) const override{
         return InterpolateSpectrumSamples(colorValue, lambda);
     }
 

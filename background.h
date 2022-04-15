@@ -6,7 +6,7 @@
 
 class background {
 public:
-    virtual float backgroundColor(const ray& r, float lambda) const = 0;
+    virtual double backgroundColor(const ray& r, double lambda) const = 0;
 };
 
 class solid_background : public background {
@@ -15,7 +15,7 @@ public:
     solid_background(const RGB &solidColor) : backColor(SampledSpectrum::FromRGB(solidColor)){};
     solid_background(double a, double b, double c) : backColor(SampledSpectrum::FromRGB(RGB(a,b,c))){};
 
-    virtual float backgroundColor(const ray& r, float lambda) const override {
+    virtual double backgroundColor(const ray& r, double lambda) const override {
         return InterpolateSpectrumSamples(backColor, lambda);
     }
 

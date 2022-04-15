@@ -7,12 +7,12 @@ static const int sampledLambaEnd = 700;
 static const int nSpectralSamples = 60;
 static const int nCIESamples = 471;
 static const int nRGB2SpectSamples = 32;
-static const float CIE_Y_Integral = 106.856895;
+static const double CIE_Y_Integral = 106.856895;
 #include "CIE_Values.h"
 
 template<int nSpectrumSamples> class SuperSpectrum {
 public:
-    SuperSpectrum(float v = 0) {
+    SuperSpectrum(double v = 0) {
         for(int i = 0; i < nSpectrumSamples; i++) {
             c[i] = v;
         }
@@ -41,7 +41,7 @@ public:
         return out;
     }
 
-    SuperSpectrum operator*(float a) const{
+    SuperSpectrum operator*(double a) const{
         SuperSpectrum out = *this;
         for (int i = 0; i < nSpectrumSamples; i++) {
             out.c[i] *= a;
@@ -56,14 +56,14 @@ public:
         return *this;
     }
 
-    SuperSpectrum &operator*=(float a){
+    SuperSpectrum &operator*=(double a){
         for (int i = 0; i < nSpectrumSamples; i++) {
             c[i] *= a;
         }
         return *this;
     }
 
-    friend inline SuperSpectrum operator*(float a, const SuperSpectrum &s){
+    friend inline SuperSpectrum operator*(double a, const SuperSpectrum &s){
         return s * a;
     }
 
@@ -79,7 +79,7 @@ public:
     //division
     //negative
 
-    SuperSpectrum Clamp(float min = 0, float max = infinity) const {
+    SuperSpectrum Clamp(double min = 0, double max = infinity) const {
         SuperSpectrum out;
         for(int i = 0; i < nSpectrumSamples; i++) {
             out.c[i] = clamp(c[i], min, max);
@@ -96,18 +96,18 @@ public:
         return true;
     }
 
-    float &operator[](int i) {
+    double &operator[](int i) {
         return c[i];
     }
 
-    float operator[](int i) const {
+    double operator[](int i) const {
         return c[i];
     }
 
     static const int nSamples = nSpectrumSamples;
 
 protected:
-    float c[nSpectrumSamples];
+    double c[nSpectrumSamples];
 };
 
 #endif //SUPERSPECTRUM_H

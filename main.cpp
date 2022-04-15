@@ -4,7 +4,6 @@
 #include "ray_tracer.h"
 
 #include "SuperSpectrum.h"
-#include "RGBSpectrum.h"
 #include "SampledSpectrum.h"
 
 #include "camera.h"
@@ -130,7 +129,7 @@ hittable_list cornell_box() {
     return objects;
 }
 
-float rayColor(const ray& r, const hittable& world, const background& bGround, const int depth, const float lambda) {
+double rayColor(const ray& r, const hittable& world, const background& bGround, const int depth, const double lambda) {
     hit_record rec;
     if (depth <=0){
         return 0;
@@ -141,8 +140,8 @@ float rayColor(const ray& r, const hittable& world, const background& bGround, c
     }
 
     ray scattered;
-    float attenuation;
-    float emitted = rec.material->emitted(lambda);
+    double attenuation;
+    double emitted = rec.material->emitted(lambda);
 
     if (!rec.material->scatter(r, rec, attenuation, scattered, lambda)){
         return emitted;
@@ -156,23 +155,20 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 
     for (int row = 0; row < numRows; ++row) {
         for (int i = 0; i < imageWidth; ++i) {
-            vector<pair<float,float>> samplingSpectrum;
+            vector<pair<double,double>> samplingSpectrum;
             for (int s = 0; s < numSamples; ++s) {
                 double u = (i + points[s].x()) / (imageWidth - 1);
                 double v = ((j - row) + points[s].y()) / (imageHeight - 1);
                 ray r = usingCam.getRay(u, v);
-                float R = randomDouble(sampledLambdaStart, sampledLambaEnd);
-                float Rreturn = rayColor(r, world, bGround, recursiveDepth, R);
+
+                double R = Lerp(points[s].z(), sampledLambdaStart, sampledLambaEnd);
                 samplingSpectrum.push_back(make_pair(R,rayColor(r, world, bGround, recursiveDepth, R)));
-                float G = randomDouble(sampledLambdaStart, sampledLambaEnd);
-                samplingSpectrum.push_back(make_pair(G,rayColor(r, world, bGround, recursiveDepth, G)));
-                float B = randomDouble(sampledLambdaStart, sampledLambaEnd);
-                samplingSpectrum.push_back(make_pair(B,rayColor(r, world, bGround, recursiveDepth, B)));
             }
 
             SampledSpectrum pixelSpectrum = SampledSpectrum::FromSampled(samplingSpectrum);
             retVals.emplace_back(pixelSpectrum);
         }
+        cerr << "\rDone with row:" << j - row<< ' ' << endl <<std::flush;
     }
 
     returnColor = retVals;
@@ -181,21 +177,24 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 int main() {
     SampledSpectrum::Init();
 
-    string imageName = "DiamondRender";
-    int numSamples = 1000;
+    string imageName = "Diamond8k";
+    int numSamples = 10000;
 
-    int processor_count = 1;//thread::hardware_concurrency();
-    int threadRowSize = 10;
+    int processor_count = thread::hardware_concurrency();
+    int threadRowSize = 5;
 
     bool animation = false;
     double duration = 1;
     double fps = 1;
     int frames = static_cast<int>(duration * fps);
 
-    const int imageOption = 3; //higher = higher res
+    const int imageOption = 5; //higher = higher res
 
     int imageWidth;
     switch(imageOption) {
+        case 5:
+            imageWidth = 7680;//8k
+            break;
         case 4:
             imageWidth = 3840;//4k
             break;
@@ -220,23 +219,23 @@ int main() {
 
     /*SETUP-WORLD-----------------------------------------------------------------------------------------------------*/
 
-    auto material_light = make_shared<emissive>(RGB(12,12,12));
+    auto material_light = make_shared<emissive>(RGB(175,175,175));
 
     auto white = make_shared<lambertian>(RGB(.73,.73,.73));
 
-
     hittable_list worldSetup;
 
-    auto diamond = make_shared<dielectric>(2.4218, 0.021);
-    hittable_list diamondList = setupScene("assets/diamond.obj", diamond);
-    auto creme = make_shared<lambertian>(RGB(.99,.98,.81));
-    hittable_list backdropList = setupScene("assets/backdrop.obj", creme);
+    auto diamond = make_shared<dielectric>(2.4218, 0.0121);
+    hittable_list diamondList = setupScene("assets/diamondBril.obj", diamond);
+    auto whiteLamb = make_shared<lambertian>(RGB(.99,.99,.99));
+    //hittable_list backdropList = setupScene("assets/backdrop.obj", whiteLamb);
 
     worldSetup.add(diamondList);
-    worldSetup.add(backdropList);
+    worldSetup.add(make_shared<xzRect>(-20, 20, -20,20,0, whiteLamb));
+    //worldSetup.add(backdropList);
 
-    worldSetup.add(make_shared<sphere>(point3(7,6,-1.8), .6, material_light));
-    //worldSetup.add(make_shared<sphere>(point3(8,5,0), .4, material_light));
+    worldSetup.add(make_shared<sphere>(point3(-1.125,4.5,5.25), .9, material_light));
+    //worldSetup.add(make_shared<sphere>(point3(0,5,0), .5, material_light));
 
 /*
     auto earth_texture = make_shared<image_texture>("assets/earth.jpg");
@@ -279,15 +278,15 @@ int main() {
 
     vec3 rotation(0,1,0);
     //point3 lookFrom(13,2,3);
-    point3 lookFrom(.8,2.4783,3.475);
+    point3 lookFrom(.5,2.7783,3.475);
     point3 lookAt(0,0,0);
     //point3 lookFrom = point3(278, 278, -800);
     //point3 lookAt = point3(278, 278, 0);
-    double focalDistance = 10.0;//(lookFrom - lookAt).length();
-    double aperture = 0.0;
+    double focalDistance = (lookFrom - lookAt).length();
+    double aperture = 0.01;
 
 
-    camera cam(rotation, lookFrom, lookAt, aspectRatio, 55.0, focalDistance, aperture, 0,0);
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 60.0, focalDistance, aperture, 0,0);
     movingCamera movCam(rotation, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     frameMaker camLocationGenerator(lookFrom, lookAt);
     camLocationGenerator.generateYSpin(&movCam, duration, fps);
@@ -316,16 +315,16 @@ int main() {
     for (int j = imageHeight-1; j >= 0; --j) {
         cerr << "\rEstimating time... Scanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < imageWidth; ++i) {
-            vector<pair<float,float>> samplingSpectrum;
+            vector<pair<double,double>> samplingSpectrum;
             double u = (i + randomDouble()) / (imageWidth-1);
             double v = (j + randomDouble()) / (imageHeight-1);
 
             ray r = usingCam.getRay(u, v);
-            float R = randomDouble(sampledLambdaStart, sampledLambaEnd);
+            double R = randomDouble(sampledLambdaStart, sampledLambaEnd);
             samplingSpectrum.emplace_back(R,rayColor(r, world, bGround, recursiveDepth, R));
-            float G = randomDouble(sampledLambdaStart, sampledLambaEnd);
+            double G = randomDouble(sampledLambdaStart, sampledLambaEnd);
             samplingSpectrum.emplace_back(G,rayColor(r, world, bGround, recursiveDepth, G));
-            float B = randomDouble(sampledLambdaStart, sampledLambaEnd);
+            double B = randomDouble(sampledLambdaStart, sampledLambaEnd);
             samplingSpectrum.emplace_back(B,rayColor(r, world, bGround, recursiveDepth, B));
 
             SampledSpectrum pixelSpectrum = SampledSpectrum::FromSampled(samplingSpectrum);
@@ -340,7 +339,7 @@ int main() {
     /*RAYTRACER-------------------------------------------------------------------------------------------------------*/
 
     start = time(NULL);
-    vector<point3> points = generateSamples(2, numSamples);
+    vector<point3> points = generateSamples(3, numSamples);
 
     for(int camNum = 0; camNum < frames; camNum++) {
         ofstream image;

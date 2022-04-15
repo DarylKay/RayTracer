@@ -44,8 +44,8 @@ inline double clamp(double x, double min, double max) {
     return x;
 }
 
-inline float Lerp(float t, float v1, float v2) {
-    float out = (1 - t) * v1 + t * v2;
+inline double Lerp(double t, double v1, double v2) {
+    double out = (1 - t) * v1 + t * v2;
     if(isnan(out)){
         return 0;
     }
@@ -143,9 +143,9 @@ vector<point3> generateSamples(int dimension, int samples) {
         }
     }
 
-    //works for 2D
+    //works for 2D + wavelength
     for (int i = 0; i < samples * dimension; i += dimension) {
-        genSamples.push_back(point3(h[i], h[i + 1], 0));
+        genSamples.push_back(point3(h[i], h[i + 1], h[i+2]));
     }
 
     return genSamples;

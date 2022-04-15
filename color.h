@@ -3,6 +3,7 @@
 
 #include "vec3.h"
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
@@ -10,23 +11,19 @@ void writeColor(ostream &os, SampledSpectrum pixelColor, int samples) {
     RGB rgb;
     pixelColor.ToRGB(rgb);
 
-    //float convert = 1.0 ; (float)samples;
+    //double convert = 1.0 ; (double)samples;
 
-    float luminance = pixelColor.luminance();
+    double luminance = pixelColor.luminance();
 
-    float r = static_cast<float>(rgb[0]);
-    float g = static_cast<float>(rgb[1]);
-    float b = static_cast<float>(rgb[2]);
+    double r = rgb[0] * luminance;
+    double g = rgb[1] * luminance;
+    double b = rgb[2] * luminance;
 
-    //color raised to 1/gamma, gamma=2.0
-    r = sqrt(r);
-    g = sqrt(g);
-    b = sqrt(b);
+    double gamma = 2.2;
 
-
-    os << (int)(255.999 * clamp(r,0.0,1.0)) << ' '
-       << (int)(255.999 * clamp(g,0.0,1.0)) << ' '
-       << (int)(255.999 * clamp(b,0.0,1.0)) << '\n';
+    os << (int)lround(pow(clamp(r,0.0,255.0) / 255.0, gamma) * 255.0) << ' '
+       << (int)lround(pow(clamp(g,0.0,255.0) / 255.0, gamma) * 255.0) << ' '
+       << (int)lround(pow(clamp(b,0.0,255.0) / 255.0, gamma) * 255.0) << '\n';
 }
 
 void writeColor(ostream &os, vector<SampledSpectrum> pixelRow, int samples) {

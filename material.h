@@ -9,10 +9,10 @@ struct hit_record;
 class material {
 public:
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
+            const ray& r_in, const struct hit_record& rec, double& attenuation, ray& scattered, double lambda
     ) const = 0;
 
-    virtual float emitted(float lambda) const {
+    virtual double emitted(double lambda) const {
         return 0.0;
     }
 };
@@ -22,12 +22,12 @@ public:
     emissive(const RGB &a) : emit(SampledSpectrum::FromRGB(a,SpectrumType::Illuminant)) {}
 
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
+            const ray& r_in, const struct hit_record& rec, double& attenuation, ray& scattered, double lambda
     ) const override {
         return false;
     }
 
-    virtual float emitted(float lambda) const override {
+    virtual double emitted(double lambda) const override {
         return InterpolateSpectrumSamples(emit, lambda);
     }
 
@@ -39,7 +39,7 @@ public:
     metal(const RGB& a, double f) : metColor(SampledSpectrum::FromRGB(a)), fuzz(f < 1 ? f : 1) {}
 
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
+            const ray& r_in, const struct hit_record& rec, double& attenuation, ray& scattered, double lambda
     ) const override {
         vec3 direction = reflect(unitVector(r_in.direction()), rec.normal);
         scattered = ray(rec.p, direction + fuzz * randomUnitSphere());
@@ -51,13 +51,47 @@ public:
     double fuzz;
 };
 
+class glossy : public material {
+public:
+    glossy(const RGB& a, double r) : glossyColor(SampledSpectrum::FromRGB(a)), reflectance(r) {}
+
+    virtual bool scatter(
+            const ray& r_in, const struct hit_record& rec, double& attenuation, ray& scattered, double lambda
+    ) const override {
+        vec3 directionSpecular = reflect(unitVector(r_in.direction()), rec.normal);
+        ray Specular = ray(rec.p, directionSpecular);
+
+        vec3 directionDiffuse = lambertianScatter(rec.normal);
+
+        if (directionDiffuse.near_zero()) {
+            directionDiffuse = rec.normal;
+        }
+
+        ray Diffuse = ray(rec.p, directionDiffuse);
+
+        if(randomDouble() > reflectance)
+        {
+            scattered = Diffuse;
+            attenuation = InterpolateSpectrumSamples(glossyColor, lambda);
+            return true;
+        } else {
+            scattered = Specular;
+            attenuation = InterpolateSpectrumSamples(glossyColor, lambda);
+            return (dot(directionSpecular, rec.normal) > 0);
+        }
+    }
+
+    SampledSpectrum glossyColor;
+    double reflectance;
+};
+
 class lambertian : public material {
 public:
     lambertian(const RGB& a) : albedo(make_shared<spectrum_color>(a)) {}
     lambertian(shared_ptr<texture> a ) : albedo(a){}
 
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
+            const ray& r_in, const struct hit_record& rec, double& attenuation, ray& scattered, double lambda
     ) const override{
         vec3 direction = lambertianScatter(rec.normal);
 
@@ -80,7 +114,7 @@ public :
     dielectric (const double ind, const double d) : indice(ind), dispersion(d) {}
 
     virtual bool scatter(
-            const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
+            const ray& r_in, const struct hit_record& rec, double& attenuation, ray& scattered, double lambda
     ) const override {
         double cauchy = indice + (dispersion/(lambda * lambda));
         double ratio = rec.front_face ? (1.0/cauchy) : cauchy;
@@ -120,7 +154,7 @@ public:
     isotropic(shared_ptr<texture> text) : albedo(text) {}
 
     virtual bool scatter(
-        const ray& r_in, const struct hit_record& rec, float& attenuation, ray& scattered, float lambda
+        const ray& r_in, const struct hit_record& rec, double& attenuation, ray& scattered, double lambda
     ) const override {
         scattered = ray(rec.p, randomUnitSphere(), r_in.time());
         attenuation = albedo->value(rec.u, rec.v, rec.p, lambda);
