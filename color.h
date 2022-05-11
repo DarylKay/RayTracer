@@ -26,9 +26,9 @@ void writeColor(ostream &os, SampledSpectrum pixelColor, int samples) {
        << (int)lround(pow(clamp(b,0.0,255.0) / 255.0, gamma) * 255.0) << '\n';
 }
 
-void writeColor(ostream &os, vector<SampledSpectrum> pixelRow, int samples) {
-        for (int i = 0; i < pixelRow.size(); i++) {
-            writeColor(os, pixelRow[i], samples);
+void writeColor(ostream &os, pair<int, vector<SampledSpectrum>> pixelRow, int samples) {
+        for (int i = 0; i < pixelRow.second.size(); i++) {
+            writeColor(os, pixelRow.second[i], samples);
         }
         os << std::flush;
 }

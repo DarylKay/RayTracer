@@ -21,7 +21,13 @@
 #include "setupScene.h"
 #include "background.h"
 #include "constant_medium.h"
+
 #include <thread>
+#include <vector>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
+#include <algorithm>
 
 
 using namespace std;
@@ -150,7 +156,7 @@ double rayColor(const ray& r, const hittable& world, const background& bGround, 
     return emitted + attenuation * (rayColor(scattered, world, bGround, depth - 1, lambda));
 }
 
-void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<point3> points, camera& usingCam, hittable_list& world, background& bGround, int numSamples, int recursiveDepth, vector<SampledSpectrum> &returnColor) {
+void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<point3> points, camera& usingCam, hittable_list& world, background& bGround, int numSamples, int recursiveDepth, vector<pair<int, vector<SampledSpectrum>>> &returnBlocks, mutex &mutex, condition_variable &results, atomic<int> &threadsCompleted) {
     vector<SampledSpectrum> retVals;
 
     for (int row = 0; row < numRows; ++row) {
@@ -159,6 +165,7 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
             for (int s = 0; s < numSamples; ++s) {
                 double u = (i + points[s].x()) / (imageWidth - 1);
                 double v = ((j - row) + points[s].y()) / (imageHeight - 1);
+
                 ray r = usingCam.getRay(u, v);
 
                 double R = Lerp(points[s].z(), sampledLambdaStart, sampledLambaEnd);
@@ -167,28 +174,32 @@ void calculateRow (int numRows, int j, int imageWidth, int imageHeight, vector<p
 
             SampledSpectrum pixelSpectrum = SampledSpectrum::FromSampled(samplingSpectrum);
             retVals.emplace_back(pixelSpectrum);
+
         }
         cerr << "\rDone with row:" << j - row<< ' ' << endl <<std::flush;
     }
 
-    returnColor = retVals;
+    lock_guard<std::mutex> lock(mutex);
+    threadsCompleted++;
+    results.notify_one();
+    returnBlocks.push_back(make_pair(j, retVals));
 }
 
 int main() {
     SampledSpectrum::Init();
-
-    string imageName = "Diamond8k";
-    int numSamples = 10000;
+/*
+    string imageName = "GlassPrism";
+    int numSamples = 100;
 
     int processor_count = thread::hardware_concurrency();
-    int threadRowSize = 5;
+    int threadRowSize = 10;
 
     bool animation = false;
     double duration = 1;
     double fps = 1;
     int frames = static_cast<int>(duration * fps);
 
-    const int imageOption = 5; //higher = higher res
+    const int imageOption = 3; //higher = higher res
 
     int imageWidth;
     switch(imageOption) {
@@ -216,25 +227,96 @@ int main() {
     const int imageHeight = (int)(imageWidth / aspectRatio);
 
     int recursiveDepth = 50;
+*/
+
+    string imageName = "Diamond4k10000Samples";
+    int numSamples = 10000;
+
+    mutex mutex;
+    condition_variable results;
+    vector<pair<int, vector<SampledSpectrum>>> pixelBlocks;
+    atomic<int> threadsCompleted = {0};
+    vector<thread> threads;
+
+    int processor_count = thread::hardware_concurrency();
+    int threadRowSize = 10;
+
+    bool animation = false;
+    double duration = 1;
+    double fps = 1;
+    int frames = static_cast<int>(duration * fps);
+
+    const int imageOption = 4; //higher = higher res
+
+    int imageWidth;
+    switch(imageOption) {
+        case 5:
+            imageWidth = 7680;//8k
+            break;
+        case 4:
+            imageWidth = 3840;//4k
+            break;
+        case 3:
+            imageWidth = 1920;//1080p
+            break;
+        case 2:
+            imageWidth = 1280;//720p
+            break;
+        case 1:
+            imageWidth = 854;//480p
+            break;
+        default:
+            imageWidth = 480;
+            break;
+    }
+
+
+    const double aspectRatio = 16.0/9.0;
+    const int imageHeight = (int)(imageWidth / aspectRatio);
+
+    int recursiveDepth = 50;
 
     /*SETUP-WORLD-----------------------------------------------------------------------------------------------------*/
-
-    auto material_light = make_shared<emissive>(RGB(175,175,175));
+/*    auto material_light = make_shared<emissive>(RGB(10000,10000,10000));
 
     auto white = make_shared<lambertian>(RGB(.73,.73,.73));
 
     hittable_list worldSetup;
 
-    auto diamond = make_shared<dielectric>(2.4218, 0.0121);
-    hittable_list diamondList = setupScene("assets/diamondBril.obj", diamond);
+    auto flintGlass = make_shared<dielectric>(1.520, 0.01342);
+    hittable_list diamondList = setupScene("assets/triprism.obj", flintGlass);
     auto whiteLamb = make_shared<lambertian>(RGB(.99,.99,.99));
     //hittable_list backdropList = setupScene("assets/backdrop.obj", whiteLamb);
 
     worldSetup.add(diamondList);
-    worldSetup.add(make_shared<xzRect>(-20, 20, -20,20,0, whiteLamb));
+    worldSetup.add(make_shared<xzRect>(-50, 50, -50,50,0, whiteLamb));
     //worldSetup.add(backdropList);
 
-    worldSetup.add(make_shared<sphere>(point3(-1.125,4.5,5.25), .9, material_light));
+    worldSetup.add(make_shared<sphere>(point3(-6,3,0), .08, material_light));
+    //worldSetup.add(make_shared<sphere>(point3(0,5,0), .5, material_light));
+*/
+
+    auto material_light = make_shared<emissive>(RGB(200,200,200));
+
+    //auto material_light = make_shared<emissive>(RGB(350,350,350));
+
+    auto white = make_shared<glossy>(RGB(.73,.73,.73), .5);
+
+    hittable_list worldSetup;
+
+    auto diamond = make_shared<dielectric>(2.4218, 0.0121);
+    hittable_list diamondList = setupScene("assets/dimondUp.obj", diamond);
+    auto whiteLamb = make_shared<lambertian>(RGB(.99,.99,.99));
+    //hittable_list backdropList = setupScene("assets/backdrop.obj", whiteLamb);
+
+    worldSetup.add(diamondList);
+    worldSetup.add(make_shared<xzRect>(-40, 40, -40,40,0, whiteLamb));
+    //worldSetup.add(backdropList);
+
+
+    worldSetup.add(make_shared<sphere>(point3(0,3.5,5.25), .8, material_light));
+
+    //worldSetup.add(make_shared<sphere>(point3(-1.125,4.5,5.25), .9, material_light));
     //worldSetup.add(make_shared<sphere>(point3(0,5,0), .5, material_light));
 
 /*
@@ -276,6 +358,23 @@ int main() {
 
     /*CAMERA----------------------------------------------------------------------------------------------------------*/
 
+
+    vec3 rotation(0,1,0);
+    //point3 lookFrom(13,2,3);
+    point3 lookFrom(0,2.1783,3.475);
+    point3 lookAt(0,0,0);
+    //point3 lookFrom = point3(278, 278, -800);
+    //point3 lookAt = point3(278, 278, 0);
+    double focalDistance = (lookFrom - lookAt).length();
+    double aperture = 0.01;
+
+
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 50.0, focalDistance, aperture, 0,0);
+    movingCamera movCam(rotation, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
+    frameMaker camLocationGenerator(lookFrom, lookAt);
+    camLocationGenerator.generateYSpin(&movCam, duration, fps);
+
+    /*
     vec3 rotation(0,1,0);
     //point3 lookFrom(13,2,3);
     point3 lookFrom(.5,2.7783,3.475);
@@ -290,7 +389,24 @@ int main() {
     movingCamera movCam(rotation, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
     frameMaker camLocationGenerator(lookFrom, lookAt);
     camLocationGenerator.generateYSpin(&movCam, duration, fps);
+     */
+/*
 
+    vec3 rotation(0,1,0);
+    //point3 lookFrom(13,2,3);
+    point3 lookFrom(1.35,4,7.5);
+    point3 lookAt(1,0,1);
+    //point3 lookFrom = point3(278, 278, -800);
+    //point3 lookAt = point3(278, 278, 0);
+    double focalDistance = (lookFrom - lookAt).length();
+    double aperture = 0.01;
+
+
+    camera cam(rotation, lookFrom, lookAt, aspectRatio, 45, focalDistance, aperture, 0,0);
+    movingCamera movCam(rotation, lookAt, aspectRatio, 90.0, focalDistance, aperture, 0,0);
+    frameMaker camLocationGenerator(lookFrom, lookAt);
+    camLocationGenerator.generateYSpin(&movCam, duration, fps);
+*/
     /*ESTIMATOR-------------------------------------------------------------------------------------------------------*/
 
     ofstream imageRough;
@@ -357,44 +473,60 @@ int main() {
         }
 
         start = time(NULL);
-        for (int j = imageHeight - 1; j >= 0; j -= (4 * threadRowSize)) {
+        for (int j = imageHeight - 1; j >= 0; j -= 1/*(4 * threadRowSize)*/) {
             cerr << "\rFrame: " << camNum + 1 << "/" << frames << " | Scanlines remaining: " << j << " | " << getTimeString(start, estimatedTime, j, imageHeight)
                  << ' ' << std::flush;
-
-            vector<SampledSpectrum> colorVector1;
-            vector<SampledSpectrum> colorVector2;
-            vector<SampledSpectrum> colorVector3;
-            vector<SampledSpectrum> colorVector4;
-
-            thread t1 (calculateRow, threadRowSize, j - (0 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector1));
-            thread t2 (calculateRow, threadRowSize, j - (1 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector2));
-            thread t3 (calculateRow, threadRowSize, j - (2 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector3));
-            thread t4 (calculateRow, threadRowSize, j - (3 * threadRowSize), imageWidth, imageHeight, ref(points), ref(usingCam), ref(world), ref(bGround), numSamples, recursiveDepth, ref(colorVector4));
-
-            t1.join();
-            writeColor(image, colorVector1, numSamples);
-
-            t2.join();
-            writeColor(image, colorVector2, numSamples);
-
-            t3.join();
-            writeColor(image, colorVector3, numSamples);
-
-            t4.join();
-            writeColor(image, colorVector4, numSamples);
-
 /*
+            threadsCompleted = 0;
+            threads.clear();
+            pixelBlocks.clear();
+
+            for (int i = 0; i < processor_count; ++i) {
+                vector<pair<int, SampledSpectrum>> block;
+                int start = j - (i * threadRowSize);
+                thread t([threadRowSize, start, imageWidth, imageHeight, &points, &usingCam, &world, &bGround, numSamples, recursiveDepth, &pixelBlocks, &mutex, &results, &threadsCompleted]() {
+                    calculateRow(threadRowSize, start, imageWidth, imageHeight, points, usingCam, world, bGround, numSamples, recursiveDepth, pixelBlocks, mutex, results, threadsCompleted);
+                });
+                threads.push_back(move(t));
+            }
+
+            unique_lock<std::mutex> lock(mutex);
+            results.wait(lock, [&threadsCompleted, &processor_count] {
+                return threadsCompleted == processor_count;
+            });
+
+            for (std::thread& t : threads)
+            {
+                t.join();
+            }
+
+            sort(pixelBlocks.begin(), pixelBlocks.end(), sort_);
+
+            reverse(pixelBlocks.begin()->first, pixelBlocks.end()->first);
+
+            for (int i = 0; i < processor_count; i++) {
+                writeColor(image, pixelBlocks[i], numSamples);
+            }
+            */
+
+
             for (int i = 0; i < imageWidth; ++i) {
-                SampledSpectrum pixelColor(0);
-                for (int s = 0; s < numSamples / 4; ++s) {
+                vector<pair<double,double>> samplingSpectrum;
+                for (int s = 0; s < numSamples; ++s) {
                     double u = (i + points[s].x()) / (imageWidth - 1);
                     double v = (j + points[s].y()) / (imageHeight - 1);
                     ray r = usingCam.getRay(u, v);
-                    pixelColor += rayColor(r, world, bGround, recursiveDepth);
+
+                    double R = Lerp( points[s].z(), sampledLambdaStart, sampledLambaEnd);
+                    samplingSpectrum.push_back(make_pair(R,rayColor(r, world, bGround, recursiveDepth, R)));
                 }
-                writeColor(image, pixelColor, numSamples);
-            }*/
+                SampledSpectrum pixelSpectrum = SampledSpectrum::FromSampled(samplingSpectrum);
+
+                writeColor(image, pixelSpectrum, numSamples);
+            }
+
         }
+
         image.close();
     }
     cout << "\nDone!" << endl;

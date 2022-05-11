@@ -27,7 +27,8 @@ inline double degToRad(double deg) {
 }
 
 inline double randomDouble() {
-    return rand() / (RAND_MAX + 1.0);
+    double out = rand() / (RAND_MAX + 1.0);
+    return out;
 }
 
 inline double randomDouble(double min, double max) {
